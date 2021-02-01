@@ -1,9 +1,22 @@
+'''
+file: temp.py
+author: Carson Berry <carsonberry@hotmail.ca>
+Date: January 30th, 2021
+
+Purpose: To read data from the one-wire interface of the DS18B20 temperature sensor on teh raspberry pi. 
+This file is designed to be used in a obj oriented way, such as temp.read()
+
+inputs: null
+outputs: float temp
+
+Usage:
+import temp
+python temp.read()
+'''
+
 import os 
 import time
 
-
-
-#This file is designed to be used in a obj oriented way, such as temp.read()
 
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
