@@ -3,7 +3,11 @@ test read for leak sensor
 
 
 '''
+#!/usr/bin/python
 import mcp3008
 
 with mcp3008.MCP3008() as adc:
-    print adc.read([mcp3008.CH0]) #prints raw data [ch0]
+    print(adc.read([mcp3008.CH0])) #prints raw data [ch0]
+
+if __name__ == '__main__':
+    main()
