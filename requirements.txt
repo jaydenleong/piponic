@@ -7,3 +7,4 @@ pyjwt==2.0.1
 paho-mqtt==1.5.1
 six==1.13.0
 gpiozero
+mcp3008==0.1a3
