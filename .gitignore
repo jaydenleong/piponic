@@ -1,0 +1,6 @@
+# No key files
+*.pem
+
+# No vim output files
+*.swp
+*.swo
