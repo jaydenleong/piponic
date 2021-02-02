@@ -51,6 +51,7 @@ import time
 import jwt
 import paho.mqtt.client as mqtt
 
+from gpiozero import LED
 
 def create_jwt(project_id, private_key_file, algorithm):
     """Create a JWT (https://jwt.io) to establish an MQTT connection."""
@@ -78,6 +79,8 @@ class Device(object):
         self.temperature = 0
         self.fan_on = False
         self.connected = False
+        self.led = LED(17)
+        self.led.off()
 
     def update_sensor_data(self):
         """Pretend to read the device's sensor data.
@@ -141,9 +144,10 @@ class Device(object):
             self.fan_on = data['fan_on']
             if self.fan_on:
                 print('Fan turned on.')
+                self.led.on()
             else:
                 print('Fan turned off.')
-
+                self.led.off()
 
 def parse_command_line_args():
     """Parse command line arguments."""

@@ -10,7 +10,7 @@
 # Usage: sudo ./setup.bash
 
 # Install OS dependencies
-apt-get install -yy vim git python3 python3-pip
+apt-get install -yy vim git python3 python3-pip python3-rpi.gpio
 
 # Install python3 dependencies
 pip3 install -r requirements.txt
