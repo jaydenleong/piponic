@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-r"""Sample device that consumes configuration from Google Cloud IoT.
+"""Sample device that consumes configuration from Google Cloud IoT.
 This example represents a simple device with a temperature sensor and a fan
 (simulated with software). When the device's fan is turned on, its temperature
 decreases by one degree per second, and when the device's fan is turned off,
@@ -53,6 +53,10 @@ import paho.mqtt.client as mqtt
 
 from gpiozero import LED
 
+import relay_control/relay
+import analog/adc
+
+
 def create_jwt(project_id, private_key_file, algorithm):
     """Create a JWT (https://jwt.io) to establish an MQTT connection."""
     token = {
@@ -73,14 +77,28 @@ def error_str(rc):
 
 
 class Device(object):
-    """Represents the state of a single device."""
-
+    """Represents the state of a single device. Including the variables in the system."""
     def __init__(self):
+        #sensors
         self.temperature = 0
+        self.pH = adc.init_ph()
+        self.pH.read_pH()
+        self.leak = adc.init_leak()
+        self.leak.read_leak()
+
         self.fan_on = False
         self.connected = False
         self.led = LED(17)
         self.led.off()
+        
+        #Control Devices
+        self.peristaltic_pump = relay.init_one()
+        self.peristaltic_pump.on1()
+        self.peristaltic_pump.off1()
+
+        self.water_solenoid = relay.init_three()
+        self.water_solenoid.on3()
+        self.water_solenoid.off3()
 
     def update_sensor_data(self):
         """Pretend to read the device's sensor data.
@@ -148,6 +166,18 @@ class Device(object):
             else:
                 print('Fan turned off.')
                 self.led.off()
+
+        if data['fan_on'] != self.fan_on:
+            # If changing the state of the fan, print a message and
+            # update the internal state.
+            self.fan_on = data['fan_on']
+            if self.fan_on:
+                print('Fan turned on.')
+                self.led.on()
+            else:
+                print('Fan turned off.')
+                self.led.off()
+
 
 def parse_command_line_args():
     """Parse command line arguments."""

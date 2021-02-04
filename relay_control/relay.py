@@ -1,8 +1,4 @@
-'''
-Controlling the 4 relay channels with the raspberry pi zero w
-RPi is connected to 4 relay channels on GPIO26, GPIO19, GPIO13, GPIO06 (in this order)
-
-
+''' Controlling the 4 relay channels with the raspberry pi zero w RPi is connected to 4 relay channels on GPIO26, GPIO19, GPIO13, GPIO06 (in this order) 
 
 Author: Carson Berry
 Date: February 2, 2021
@@ -32,16 +28,21 @@ in2 = 19
 in3 = 13
 in4 = 6
 
-GPIO.setup(in1, GPIO.OUT)
-GPIO.setup(in2, GPIO.OUT)
-GPIO.setup(in3, GPIO.OUT)
-GPIO.setup(in4, GPIO.OUT)
 
-#set normally low (relay off)
-GPIO.output(in1,False)
-GPIO.output(in2,False)
-GPIO.output(in3,False)
-GPIO.output(in4,False)
+def init_one():
+    GPIO.setup(in1, GPIO.OUT)
+ #set normally low (relay off
+    GPIO.output(in1,False)
+def init_two():
+    GPIO.setup(in2, GPIO.OUT)
+    GPIO.output(in2,False)
+def init_three():
+    GPIO.setup(in3, GPIO.OUT)
+    GPIO.output(in3,False)
+def init_four():
+    GPIO.setup(in4, GPIO.OUT)
+    GPIO.output(in4,False)
+
 
 
 #example function of turning on relay 1. Ti's almost too simple toi make a function for. We need to ahve a discussion about what this should look like...
