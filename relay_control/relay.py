@@ -1,4 +1,9 @@
-''' Controlling the 4 relay channels with the raspberry pi zero w RPi is connected to 4 relay channels on GPIO26, GPIO19, GPIO13, GPIO06 (in this order) 
+'''
+Controlling the 4 relay channels with the raspberry pi zero w
+RPi is connected to 4 relay channels on GPIO26, GPIO19, GPIO13, GPIO06 (in this order)
+
+
+>>>>>>> 892991e028f6eaf4ae6bd0735b3b875f3d701d80
 
 Author: Carson Berry
 Date: February 2, 2021
@@ -9,6 +14,7 @@ Outputs: zero if successfull
 
 Usage: 
 import relay
+relay.init_one()
 relay.on1()
 relay.off1()
 relay.demo()
