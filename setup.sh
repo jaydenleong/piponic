@@ -18,6 +18,7 @@ pip3 install -r requirements.txt
 # Create RSA keys for Google Cloud Communication
 openssl genpkey -algorithm RSA -out rsa_private.pem -pkeyopt rsa_keygen_bits:2048
 openssl rsa -in rsa_private.pem -pubout -out rsa_public.pem
+chmod +r rsa_private.pem rsa_public.pem
 
 # Download google root CA
 # See here for details https://cloud.google.com/iot/docs/how-tos/mqtt-bridge
