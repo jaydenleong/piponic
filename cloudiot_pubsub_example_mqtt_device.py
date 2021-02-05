@@ -163,20 +163,11 @@ class Device(object):
             if self.fan_on:
                 print('Fan turned on.')
                 self.led.on()
+                self.relay.on1()
             else:
                 print('Fan turned off.')
                 self.led.off()
-
-        if data['fan_on'] != self.fan_on:
-            # If changing the state of the fan, print a message and
-            # update the internal state.
-            self.fan_on = data['fan_on']
-            if self.fan_on:
-                print('Fan turned on.')
-                self.led.on()
-            else:
-                print('Fan turned off.')
-                self.led.off()
+                self.relay.off1()
 
 
 def parse_command_line_args():
