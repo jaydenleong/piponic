@@ -83,25 +83,30 @@ class Device(object):
     def __init__(self):
         #sensors
         self.temperature = 0
-        self.temp.read()
-        self.pH = adc.init_ph()
-        self.pH.read_pH()
-        self.leak = adc.init_leak()
-        self.leak.read_leak()
-
+        self.temp = temp
+        self.pH = 0
+        self.adc = adc
+        self.adc.read_pH()
+        self.adc.read_leak()
+        self.leak = 0
+        
         self.fan_on = False
         self.connected = False
-
+        
         self.led = LED(17)
         self.led.off()
         
         #Control Devices
         self.peristaltic_pump_on = False
-        self.peristaltic_pump = relay.init_one()
+        self.relay=relay
+        self.peristaltic_pump = self.relay
+        self.peristaltic_pump.init_one()
         self.peristaltic_pump.on1()
         self.peristaltic_pump.off1()
 
-        self.water_solenoid = relay.init_three()
+        self.water_solenoid_on = False
+        self.water_solenoid = self.relay
+        self.water_solenoid.init_three()
         self.water_solenoid.on3()
         self.water_solenoid.off3()
 
@@ -110,9 +115,9 @@ class Device(object):
         If the fan is on, assume the temperature decreased one degree,
         otherwise assume that it increased one degree.
         """
-       self.temperature = temp.read()
-       self.pH = self.pH.read_pH()
-       self.leak = self.leak.read_leak()
+        self.temperature = temp.read()
+        self.pH = self.adc.read_pH()
+        self.leak = self.adc.read_leak()
 
        
 
@@ -274,12 +279,12 @@ def main():
     
         # Report the device's temperature to the server by serializing it
         # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature},{'pH:', device.pH},{'leak:', device.leak})
+        payload = json.dumps({'temperature': device.temperature,'pH': device.pH,'leak': device.leak})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
         time.sleep(10)
-
+     
     client.disconnect()
     client.loop_stop()
     print('Finished loop successfully. Goodbye!')
