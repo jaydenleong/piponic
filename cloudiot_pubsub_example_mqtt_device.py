@@ -48,13 +48,15 @@ import os
 import ssl
 import time
 
+
 import jwt
 import paho.mqtt.client as mqtt
 
 from gpiozero import LED
 
-import relay_control/relay
-import analog/adc
+import src.relay as relay
+import src.adc as adc
+import src.temp as temp
 
 
 def create_jwt(project_id, private_key_file, algorithm):
@@ -81,6 +83,7 @@ class Device(object):
     def __init__(self):
         #sensors
         self.temperature = 0
+        self.temp.read()
         self.pH = adc.init_ph()
         self.pH.read_pH()
         self.leak = adc.init_leak()
@@ -88,10 +91,12 @@ class Device(object):
 
         self.fan_on = False
         self.connected = False
+
         self.led = LED(17)
         self.led.off()
         
         #Control Devices
+        self.peristaltic_pump_on = False
         self.peristaltic_pump = relay.init_one()
         self.peristaltic_pump.on1()
         self.peristaltic_pump.off1()
@@ -105,10 +110,11 @@ class Device(object):
         If the fan is on, assume the temperature decreased one degree,
         otherwise assume that it increased one degree.
         """
-        if self.fan_on:
-            self.temperature -= 1
-        else:
-            self.temperature += 1
+       self.temperature = temp.read()
+       self.pH = self.pH.read_pH()
+       self.leak = self.leak.read_leak()
+
+       
 
     def wait_for_connection(self, timeout):
         """Wait for the device to become connected."""
@@ -156,18 +162,17 @@ class Device(object):
         # The config is passed in the payload of the message. In this example,
         # the server sends a serialized JSON string.
         data = json.loads(payload)
-        if data['fan_on'] != self.fan_on:
+        if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
             # If changing the state of the fan, print a message and
             # update the internal state.
-            self.fan_on = data['fan_on']
-            if self.fan_on:
-                print('Fan turned on.')
-                self.led.on()
-                self.relay.on1()
+            self.peristaltic_pump_on = data['peristaltic_pump_on']
+            if self.peristaltic_pump_on:
+                print('peristaltic_pump turned on.')
+                self.peristaltic_pump.on1()
             else:
-                print('Fan turned off.')
-                self.led.off()
-                self.relay.off1()
+                print('peristaltic_pump turned off.')
+                self.peristaltic_pump.off1()
+
 
 
 def parse_command_line_args():
@@ -266,14 +271,14 @@ def main():
         # In an actual device, this would read the device's sensors. Here,
         # you update the temperature based on whether the fan is on.
         device.update_sensor_data()
-
+    
         # Report the device's temperature to the server by serializing it
         # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature})
+        payload = json.dumps({'temperature': device.temperature},{'pH:', device.pH},{'leak:', device.leak})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
-        time.sleep(1)
+        time.sleep(10)
 
     client.disconnect()
     client.loop_stop()
