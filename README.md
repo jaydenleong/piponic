@@ -21,3 +21,18 @@ python3 cloudiot_pubsub_example_mqtt_device.py \
 ```
 
 Please contact Jayden for questions about device ID.
+
+For use of sensor and control modules, the use follows: 
+import src.adc as adc
+import src.temp as temp
+import src.relay as relay
+
+relay.init_one()
+relay.on1()
+relay.off1()
+
+temp.read()
+
+adc.read_pH()
+adc.read_leak()
+
