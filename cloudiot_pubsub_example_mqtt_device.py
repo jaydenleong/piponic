@@ -84,11 +84,11 @@ class Device(object):
         #sensors
         self.temperature = 0
         self.temp = temp
-        self.pH = 0
-        self.adc = adc
-        self.adc.read_pH()
-        self.adc.read_leak()
+        self.pH = 7
         self.leak = 0
+        #self.adc = adc
+        #self.adc.read_pH()
+        #self.adc.read_leak()
         
         self.fan_on = False
         self.connected = False
@@ -101,14 +101,14 @@ class Device(object):
         self.relay=relay
         self.peristaltic_pump = self.relay
         self.peristaltic_pump.init_one()
-        self.peristaltic_pump.on1()
-        self.peristaltic_pump.off1()
+        #self.peristaltic_pump.on1()
+        #self.peristaltic_pump.off1()
 
         self.water_solenoid_on = False
         self.water_solenoid = self.relay
         self.water_solenoid.init_three()
-        self.water_solenoid.on3()
-        self.water_solenoid.off3()
+        #self.water_solenoid.on3()
+        #self.water_solenoid.off3()
 
     def update_sensor_data(self):
         """Pretend to read the device's sensor data.
@@ -116,10 +116,9 @@ class Device(object):
         otherwise assume that it increased one degree.
         """
         self.temperature = temp.read()
-        self.pH = self.adc.read_pH()
-        self.leak = self.adc.read_leak()
-
-       
+        self.pH = adc.read_pH()
+        self.leak = adc.read_leak()
+        print('All sensors successfully read!')   
 
     def wait_for_connection(self, timeout):
         """Wait for the device to become connected."""

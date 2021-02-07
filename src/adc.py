@@ -6,7 +6,10 @@ Date: February 2nd, 2021
 
 
 usage: 
-    python3 adc.read_leak()
+
+    python3
+     import src.adc as adc
+    adc.read_leak()
 
 Reference provided at: https://learn.adafruit.com/adafruit-4-channel-adc-breakouts/python-circuitpython
 
