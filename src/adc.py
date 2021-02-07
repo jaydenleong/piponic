@@ -30,6 +30,11 @@ def init_leak():
     chan = AnalogIn(ads,ADS.P0)
     return chan
 
+def init_ph():
+    ads = init_i2c()
+    chan= AnalogIn(ads,ADS.P1)
+    return chan
+
 def init_pH():
     ads = init_i2c()
     chan= AnalogIn(ads,ADS.P1)
@@ -46,6 +51,12 @@ def calc_pH(pH_voltage):
     #formula found at https://raspberrypi.stackexchange.com/questions/96653/ph-4502c-ph-sensor-calibration-and-adc-using-mcp3008-pcf8591-and-ads1115 and adjusted to match east vancouver's tap water pH of 7.7
     pH = 7.7 +(pH_voltage-2.51)*(-5.5)
     print('pH:',pH)
+    return pH
+
+def read_ph():
+    chan = init_pH()
+    print('pH voltage:',chan.voltage)
+    pH = calc_pH(chan.voltage)
     return pH
 
 def read_pH():

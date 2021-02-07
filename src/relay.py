@@ -71,6 +71,57 @@ def off1():
         return -1
 
 
+def on2():
+    try:
+        GPIO.output(in2,True)
+        return 0
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        return -1
+
+def off2():
+    try:
+        GPIO.output(in2,False)
+        return 0
+
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        return -1
+
+def on3():
+    try:
+        GPIO.output(in3,True)
+        return 0
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        return -1
+
+def off3():
+    try:
+        GPIO.output(in3,False)
+        return 0
+
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        return -1
+
+def on4():
+    try:
+        GPIO.output(in4,True)
+        return 0
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        return -1
+
+def off4():
+    try:
+        GPIO.output(in4,False)
+        return 0
+
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        return -1
+
 
 
 
