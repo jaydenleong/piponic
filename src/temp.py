@@ -53,8 +53,4 @@ def read():
         print('Temperature sensor error! Check Wiring or device ID is correct')
         return -1
 
-#for demo-ing purposes
-#while True:
-#	print(read_temp())
-#	time.sleep(2)
 
