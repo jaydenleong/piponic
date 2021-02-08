@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-r"""Sample device that consumes configuration from Google Cloud IoT.
+"""Sample device that consumes configuration from Google Cloud IoT.
 This example represents a simple device with a temperature sensor and a fan
 (simulated with software). When the device's fan is turned on, its temperature
 decreases by one degree per second, and when the device's fan is turned off,
@@ -48,10 +48,17 @@ import os
 import ssl
 import time
 
+
 import jwt
 import paho.mqtt.client as mqtt
 
 from gpiozero import LED
+
+import src.relay as relay
+import src.adc as adc
+import src.temp as temp
+import src.pins as pins
+
 
 def create_jwt(project_id, private_key_file, algorithm):
     """Create a JWT (https://jwt.io) to establish an MQTT connection."""
@@ -73,24 +80,48 @@ def error_str(rc):
 
 
 class Device(object):
-    """Represents the state of a single device."""
-
+    """Represents the state of a single device. Including the variables in the system."""
     def __init__(self):
+        #sensors
         self.temperature = 0
-        self.fan_on = False
+        self.temp = temp
+        self.pH = 7
+        self.leak = 0
+        self.adc_sensors = adc.adc_sensors()
+        
+        
         self.connected = False
+        
+        #test classes
+        self.fan_on = False
         self.led = LED(17)
         self.led.off()
+        
+        #Control Devices
+        self.relay=relay
+        self.peristaltic_pump_on = False
+        self.peristaltic_pump = self.relay
+        self.peristaltic_pump.init(pins.RELAY1)
+
+
+        self.water_solenoid_on = False
+        self.water_solenoid = self.relay
+        self.water_solenoid.init(pins.RELAY3)
+
 
     def update_sensor_data(self):
         """Pretend to read the device's sensor data.
         If the fan is on, assume the temperature decreased one degree,
         otherwise assume that it increased one degree.
         """
-        if self.fan_on:
-            self.temperature -= 1
-        else:
-            self.temperature += 1
+        self.temperature = temp.read()
+        try:
+            self.pH = self.adc_sensors.read_pH()
+            self.leak = self.adc_sensors.read_leak()
+        except:
+            print('Error ADC or I2C Error')
+
+        print('All sensors successfully read!')   
 
     def wait_for_connection(self, timeout):
         """Wait for the device to become connected."""
@@ -138,16 +169,18 @@ class Device(object):
         # The config is passed in the payload of the message. In this example,
         # the server sends a serialized JSON string.
         data = json.loads(payload)
-        if data['fan_on'] != self.fan_on:
+        if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
             # If changing the state of the fan, print a message and
             # update the internal state.
-            self.fan_on = data['fan_on']
-            if self.fan_on:
-                print('Fan turned on.')
-                self.led.on()
+            self.peristaltic_pump_on = data['peristaltic_pump_on']
+            if self.peristaltic_pump_on:
+                print('peristaltic_pump turned on.')
+                self.peristaltic_pump.on(pins.RELAY1)
             else:
-                print('Fan turned off.')
-                self.led.off()
+                print('peristaltic_pump turned off.')
+                self.peristaltic_pump.off(pins.RELAY2)
+
+
 
 def parse_command_line_args():
     """Parse command line arguments."""
@@ -245,15 +278,15 @@ def main():
         # In an actual device, this would read the device's sensors. Here,
         # you update the temperature based on whether the fan is on.
         device.update_sensor_data()
-
+    
         # Report the device's temperature to the server by serializing it
         # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature})
+        payload = json.dumps({'temperature': device.temperature,'pH': device.pH,'leak': device.leak})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
         time.sleep(1)
-
+     
     client.disconnect()
     client.loop_stop()
     print('Finished loop successfully. Goodbye!')
