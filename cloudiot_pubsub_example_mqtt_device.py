@@ -86,7 +86,7 @@ class Device(object):
         self.temp = temp
         self.pH = 7
         self.leak = 0
-        #self.adc = adc
+        self.adc_sensors = adc.adc_sensors()
         #self.adc.read_pH()
         #self.adc.read_leak()
         
@@ -116,8 +116,8 @@ class Device(object):
         otherwise assume that it increased one degree.
         """
         self.temperature = temp.read()
-        self.pH = adc.read_pH()
-        self.leak = adc.read_leak()
+        self.pH = self.adc_sensors.read_pH()
+        self.leak = self.adc_sensors.read_leak()
         print('All sensors successfully read!')   
 
     def wait_for_connection(self, timeout):
@@ -282,7 +282,7 @@ def main():
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
-        time.sleep(10)
+        time.sleep(1)
      
     client.disconnect()
     client.loop_stop()

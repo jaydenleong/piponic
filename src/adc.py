@@ -8,8 +8,12 @@ Date: February 2nd, 2021
 usage: 
 
     python3
-     import src.adc as adc
-    adc.read_leak()
+    import src.adc as adc
+    sensors = adc.adc_sensors()
+    sensors.read_leak()
+    sensors.read_pH()
+
+
 
 Reference provided at: https://learn.adafruit.com/adafruit-4-channel-adc-breakouts/python-circuitpython
 
@@ -27,32 +31,48 @@ def init_i2c():
     ads = ADS.ADS1115(i2c) 
     return ads
 
-def init_leak():
-    ads = init_i2c()
+class adc_sensors(object):
+    def __init__(self):
+        self.ads=init_i2c();
+        self.leak_sensor = init_leak(self.ads)
+        self.pH_sensor = init_pH(self.ads)
+       
+    def read_leak(self):
+        return self.leak_sensor.voltage
+
+    def read_pH(self):
+        return calc_pH(self.pH_sensor.voltage)
+
+    def read_ph(self):
+        return calc_pH(self.pH_sensor.voltage)
+
+
+def init_leak(ads):
+    #ads = init_i2c()
     #single channel read
     chan = AnalogIn(ads,ADS.P0)
     return chan
 
-def init_ph():
-    ads = init_i2c()
+def init_ph(ads):
+    #ads = init_i2c()
     chan= AnalogIn(ads,ADS.P1)
     return chan
 
-def init_pH():
-    ads = init_i2c()
+def init_pH(ads):
+    #ads = init_i2c()
     chan= AnalogIn(ads,ADS.P1)
     return chan
 
 
-def read_leak():
-    chan = init_leak()
-    print('leak voltage', chan.voltage)
-    return chan.voltage
+#def read_leak():
+    #chan = init_leak()
+#    print('leak voltage', chan.voltage)
+#    return chan.voltage
 
 def calc_pH(pH_voltage):
 
     #formula found at https://raspberrypi.stackexchange.com/questions/96653/ph-4502c-ph-sensor-calibration-and-adc-using-mcp3008-pcf8591-and-ads1115 and adjusted to match east vancouver's tap water pH of 7.7
-    pH = 7.7 +(pH_voltage-2.51)*(-5.5)
+    pH = 7.7 +(pH_voltage-1.65)*(-5.5)
     print('pH:',pH)
     return pH
 
