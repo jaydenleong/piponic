@@ -89,22 +89,24 @@ class Device(object):
         self.leak = 0
         self.adc_sensors = adc.adc_sensors()
         
-        self.fan_on = False
+        
         self.connected = False
         
+        #test classes
+        self.fan_on = False
         self.led = LED(17)
         self.led.off()
         
         #Control Devices
-        self.peristaltic_pump_on = False
         self.relay=relay
+        self.peristaltic_pump_on = False
         self.peristaltic_pump = self.relay
-        self.peristaltic_pump.init_one()
+        self.peristaltic_pump.init(pins.RELAY1)
 
 
         self.water_solenoid_on = False
         self.water_solenoid = self.relay
-        self.water_solenoid.init_three()
+        self.water_solenoid.init(pins.RELAY3)
 
 
     def update_sensor_data(self):
@@ -173,10 +175,10 @@ class Device(object):
             self.peristaltic_pump_on = data['peristaltic_pump_on']
             if self.peristaltic_pump_on:
                 print('peristaltic_pump turned on.')
-                self.peristaltic_pump.on1()
+                self.peristaltic_pump.on(pins.RELAY1)
             else:
                 print('peristaltic_pump turned off.')
-                self.peristaltic_pump.off1()
+                self.peristaltic_pump.off(pins.RELAY2)
 
 
 
