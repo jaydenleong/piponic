@@ -79,15 +79,41 @@ then
     apt-get install -yy apt-transport-https ca-certificates gnupg
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
     apt-get install -yy google-cloud-sdk
+
+    echo ""
+    echo "----- PLEASE LOGIN TO THE GOOGLE CLOUD SDK -----"
+    echo ""
     gcloud init --console-only
 else 
+    echo ""
+    echo "----- PLEASE LOGIN TO THE GOOGLE CLOUD SDK -----"
+    echo ""
+
     gcloud auth login
-    gcloud config set project ${PROJECT_ID}
 fi 
+
+if ! gcloud projects list | grep -q ${PROJECT_ID} ; then
+    echo ""
+    echo "----- ERROR: Google Cloud project ${PROJECT_ID} not found... -----"
+    echo "Please run this script again and enter a valid project name" 
+    echo ""
+
+    # Logout of gcloud for security purposes
+    echo ""
+    echo "----- LOGGING OUT OF GOOGLE CLOUD -----"
+    echo ""
+    gcloud auth revoke --all
+    exit 1
+fi
+gcloud config set project ${PROJECT_ID}
 
 # Create IoT Device registry if not exists
 if gcloud iot registries list --project ${PROJECT_ID} --region us-central1 | grep -q $REGISTRY_ID
 then
+    echo ""
+    echo "----- EXISTING GCLOUD REGISTRY ${REGISTRY_ID} FOUND, USING IT-----"
+    echo ""
+else
     echo ""
     echo "----- EXISTING GCLOUD IOT REGISTRY NOT FOUND, CREATING NEW CALLED ${REGISTRY_ID}-----"
     echo ""
@@ -95,7 +121,7 @@ then
     --project=${PROJECT_ID} \
     --region=us-central1 \
     --event-notification-config=topic=device-events
-fi
+fi 
 
 # Create Google Cloud Device if not exists
 if gcloud iot devices list --project ${PROJECT_ID} --registry ${REGISTRY_ID} --region us-central1 | grep -q $DEVICE_ID
