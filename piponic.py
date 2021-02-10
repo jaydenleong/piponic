@@ -55,6 +55,7 @@ import src.relay as relay
 import src.adc as adc
 import src.temp as temp
 import src.pins as pins
+import src.water_level as WL
 
 
 def create_jwt(project_id, private_key_file, algorithm):
@@ -85,6 +86,8 @@ class Device(object):
         self.pH = 7
         self.leak = 0
         self.adc_sensors = adc.adc_sensors()
+        self.water_level_sensor = WL.water_level()
+        self.water_level = 0
         
         
         self.connected = False
@@ -115,6 +118,7 @@ class Device(object):
         try:
             self.pH = self.adc_sensors.read_pH()
             self.leak = self.adc_sensors.read_leak()
+            self.water_level = self.water_level_sensor.read()
         except:
             print('Error ADC or I2C Error')
 
@@ -275,7 +279,7 @@ def main():
     
         # Report the device's temperature to the server by serializing it
         # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature,'pH': device.pH,'leak': device.leak})
+        payload = json.dumps({'temperature': device.temperature,'pH': device.pH,'leak': device.leak,'water_level': device.water_level})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
