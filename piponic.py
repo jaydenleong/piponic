@@ -10,36 +10,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Sample device that consumes configuration from Google Cloud IoT.
-This example represents a simple device with a temperature sensor and a fan
-(simulated with software). When the device's fan is turned on, its temperature
-decreases by one degree per second, and when the device's fan is turned off,
-its temperature increases by one degree per second.
-
-Every second, the device publishes its temperature reading to Google Cloud IoT
-Core. The server meanwhile receives these temperature readings, and decides
-whether to re-configure the device to turn its fan on or off. The server will
-instruct the device to turn the fan on when the device's temperature exceeds 10
-degrees, and to turn it off when the device's temperature is less than 0
-degrees. In a real system, one could use the cloud to compute the optimal
-thresholds for turning on and off the fan, but for illustrative purposes we use
-a simple threshold model.
-
-To connect the device you must have downloaded Google's CA root certificates,
-and a copy of your private key file. See cloud.google.com/iot for instructions
-on how to do this. Run this script with the corresponding algorithm flag.
-
-  $ python cloudiot_pubsub_example_mqtt_device.py \
-      --project_id=my-project-id \
-      --registry_id=example-my-registry-id \
-      --device_id=my-device-id \
-      --private_key_file=rsa_private.pem \
-      --algorithm=RS256
-
-With a single server, you can run multiple instances of the device with
-different device ids, and the server will distinguish them. Try creating a few
-devices and running them all at the same time.
-"""
+#
+# File: piponic.py
+# 
+# Modified: Jayden Leong <jdleong58@gmail.com>
+# 
+# Date: February 7, 2021
+#
+# Purpose: Entry point to the piponic program. This program gathers
+#          data from attached aquaponic/hydroponic sensors. It also
+#          controls output devices attached to the Raspberry Pi.
+#          It uses Google Cloud IoT in order to send sensor updates
+#          and recieve commands from a mobile application.
+#
+#          This script was modified from an example given here:
+#          https://github.com/GoogleCloudPlatform/python-docs-samples/
+#
+# Usage:
+#          $ python3 piponic.py \
+#               --project_id=my-project-id \
+#               --registry_id=example-my-registry-id \
+#               --device_id=my-device-id \
+#               --private_key_file=rsa_private.pem \
+#               --algorithm=RS256
+#          
+#          Only use this command if running manually. The install.sh
+#          script installs this to run automatically when the Raspberry Pi boots.
+#          Please see install.sh for more details.
 
 import argparse
 import datetime
@@ -178,7 +175,7 @@ class Device(object):
                 self.peristaltic_pump.on(pins.RELAY1)
             else:
                 print('peristaltic_pump turned off.')
-                self.peristaltic_pump.off(pins.RELAY2)
+                self.peristaltic_pump.off(pins.RELAY1)
 
 
 
@@ -267,9 +264,6 @@ def main():
     # This is the topic that the device will receive configuration updates on.
     mqtt_config_topic = '/devices/{}/config'.format(args.device_id)
 
-    # Wait up to 5 seconds for the device to connect.
-    device.wait_for_connection(5)
-
     # Subscribe to the config topic.
     client.subscribe(mqtt_config_topic, qos=1)
 
@@ -285,7 +279,7 @@ def main():
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
-        time.sleep(1)
+        time.sleep(30)
      
     client.disconnect()
     client.loop_stop()

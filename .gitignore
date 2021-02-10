@@ -4,5 +4,9 @@
 # No vim output files
 *.swp
 *.swo
-#no python cache files
+
+# No python cache files
 *pycache*
+
+# No systemd files
+*.service

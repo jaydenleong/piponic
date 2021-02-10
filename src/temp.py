@@ -15,6 +15,7 @@ python temp.read()
 '''
 
 import os 
+import glob
 import time
 
 
@@ -27,10 +28,11 @@ def temp_raw():
     try: 
         os.system('modprobe w1-gpio')
         os.system('modprobe w1-therm')
-        temp_sensor = '/sys/bus/w1/devices/28-3c01b556d3de/w1_slave'
+        temp_dir = '/sys/bus/w1/devices/28-*/w1_slave'
+        temp_sensor = glob.glob(temp_dir)
     except:
         print('Wrong Temperature Device ID')
-    f = open(temp_sensor, 'r')
+    f = open(temp_sensor[0], 'r')
     lines = f.readlines()
     f.close()
     return lines

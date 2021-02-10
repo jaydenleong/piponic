@@ -10,4 +10,3 @@ gpiozero
 mcp3008==0.1a3
 adafruit-circuitpython-ads1x15
 Adafruit-Blinka
-threading
