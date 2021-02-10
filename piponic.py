@@ -175,7 +175,7 @@ class Device(object):
                 self.peristaltic_pump.on(pins.RELAY1)
             else:
                 print('peristaltic_pump turned off.')
-                self.peristaltic_pump.off(pins.RELAY2)
+                self.peristaltic_pump.off(pins.RELAY1)
 
 
 
