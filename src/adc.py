@@ -59,7 +59,7 @@ class adc_sensors(object):
         self.leak_sensor= AnalogIn(self.ads,ADS.P0)
          
     def init_ph(self):
-        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
+        self.pH_sensor= AnalogIn(self.ads,ADS.P2)
 
     def init_pH(self):
         self.pH_sensor= AnalogIn(self.ads,ADS.P1)
@@ -89,7 +89,7 @@ class adc_sensors(object):
 
     def read_ph(self):
         pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-14.7/10)*(-3.3)
+        pH = 4.7 +(pH_voltage-1.65)*(-3.3)
         return pH
 
     def read_battery(self):
