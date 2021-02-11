@@ -29,10 +29,14 @@ class water_level(object):
         self.read() # update level 
 
     def setup(self):
-        GPIO.setmode(GPIO.BCM) #read GPIO labels not pin numbers 
-
-        #Enable input, pull-down resistor so GPIO pin is normally GND
-        GPIO.setup(pins.WATER_LEVEL,GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        try:
+            GPIO.setmode(GPIO.BCM) #read GPIO labels not pin numbers 
+            GPIO.setwarnings(False)
+            #Enable input, pull-down resistor so GPIO pin is normally GND
+            GPIO.setup(pins.WATER_LEVEL,GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        except:
+            print('GPIO setup issue')
+            
 
     def read(self):
         try:
