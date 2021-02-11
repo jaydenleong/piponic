@@ -35,5 +35,10 @@ class water_level(object):
         GPIO.setup(pins.WATER_LEVEL,GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     def read(self):
-        self.level = GPIO.input(pins.WATER_LEVEL)
-        return self.level
+        try:
+            self.level = GPIO.input(pins.WATER_LEVEL)
+            return self.level
+        except:
+            GPIO.cleanup()        
+            return -1
+

@@ -121,8 +121,13 @@ class Device(object):
             self.water_level = self.water_level_sensor.read()
         except:
             print('Error ADC or I2C Error')
+            self.exit()
 
         print('All sensors successfully read!')   
+
+
+    def exit(self): 
+        GPIO.cleanup()
 
     def wait_for_connection(self, timeout):
         """Wait for the device to become connected."""
@@ -283,7 +288,7 @@ def main():
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
-        time.sleep(30)
+        time.sleep(10)
      
     client.disconnect()
     client.loop_stop()
