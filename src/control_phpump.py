@@ -14,15 +14,20 @@ Reference provided at: https://learn.adafruit.com/adafruit-4-channel-adc-breakou
 import RPi.GPIO as GPIO
 import time
 import board
+import threading
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 
 
 
-
+# Add timers for different outputs ex. ph_timer, water_level_timer, temp_timer
 
 class adc_sensors(object):
+
+
+    
+    
 
     def __init__(self):
     
@@ -61,17 +66,25 @@ class adc_sensors(object):
         pH = 7.7 +(pH_voltage-1.65)*(-3.3)
         return pH
         
-        
-     try: 
-        while True: 
-            if int(read_ph()) >= 8
-            pump_open()
-                time.sleep(20)
-            
     def pump_open():
         print 'pump opened'
         GPIO.output(9,GPIO.HIGH)
         time.sleep(1)
         GPIO.output(9,GPIO.LOW)
-        time.sleep(10)
+    #Here I add the function of the timer
+    #This code here correspond update the data at default time
+    #Using threading method
+    def test_ph():
+        while True:
+            read_ph()
+            if (int(read_ph()<= 6)):
+                pump_open()
+                
+        
+    thread = threading.Thread(target=test_ph)
+    thread.start()    
+        
+  
+            
+    
         
