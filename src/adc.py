@@ -55,12 +55,18 @@ class adc_sensors(object):
 
     def read_pH(self):
         pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-0.82)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
+        pH = 7.7 +(pH_voltage-14.7/10)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
+        return pH
+    #test out an experimental quadratic formula
+    def read_pH_ex(self):
+        pH_voltage = self.pH_sensor.voltage
+        #pH_voltage = pH_voltage*14.7/10 #voltage divider
+        pH = -5.6732*pH_voltage**2+6.7868*pH_voltage+12.743
         return pH
 
     def read_ph(self):
         pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-1.65)*(-3.3)
+        pH = 7.7 +(pH_voltage-14.7/10)*(-3.3)
         return pH
 
 
