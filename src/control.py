@@ -26,7 +26,7 @@ class adc_sensors(object):
 
 
     
-    
+  
 
     def __init__(self):
     
