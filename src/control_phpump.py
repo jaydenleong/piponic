@@ -1,13 +1,13 @@
-Python script to read analog voltage values from ADS1115 16bit ADC with PGA
-Author: Carson Berry 
-Date: February 2nd, 2021
-usage: 
-    python3
-    import src.adc as adc
-    sensors = adc.adc_sensors()
-    sensors.read_leak()
-    sensors.read_pH()
-Reference provided at: https://learn.adafruit.com/adafruit-4-channel-adc-breakouts/python-circuitpython
+#Python script to read analog voltage values from ADS1115 16bit ADC with PGA
+#Author: Carson Berry 
+#Date: February 2nd, 2021
+#usage: 
+#    python3
+#    import src.adc as adc
+#    sensors = adc.adc_sensors()
+#    sensors.read_leak()
+#    sensors.read_pH()
+# Reference provided at: https://learn.adafruit.com/adafruit-4-channel-adc-breakouts/python-circuitpython
 
 
 import RPi.GPIO as GPIO
