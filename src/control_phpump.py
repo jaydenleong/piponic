@@ -72,7 +72,7 @@ class adc_sensors(object):
             GPIO.cleanup()        
             return -1
         
-    def pump_open():
+    def pump_open(self):
         print 'pump opened'
         GPIO.output(9,GPIO.HIGH) #9 for the relay pin on pH pump
         time.sleep(1)
@@ -80,14 +80,14 @@ class adc_sensors(object):
     #Here I add the function of the timer
     #This code here correspond update the data at default time
     #Using threading method
-    def test_ph():
+    def test_ph(self):
         while True:
             read_ph()
             if (int(read_ph()<= 11)):
                 pump_open()
                 time.sleep(10)
                 
-    def test_waterlevel():
+    def test_waterlevel(self):
         while True: 
             read_leak()
             if (read_waterlevel()== -1):
