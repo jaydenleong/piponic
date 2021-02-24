@@ -73,7 +73,7 @@ class adc_sensors(object):
             return -1
         
     def pump_open(self):
-        print 'pump opened'
+        print ('pump opened')
         GPIO.output(9,GPIO.HIGH) #9 for the relay pin on pH pump
         time.sleep(1)
         GPIO.output(9,GPIO.LOW)
