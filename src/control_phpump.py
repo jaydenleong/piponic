@@ -92,7 +92,7 @@ class adc_sensors(object):
             if (read_waterlevel()== -1):
                 GPIO.output(8,HIGH)
                 time.sleep(1)
-                GPIO.output(9,GPIO.LOW)
+                GPIO.output(8,GPIO.LOW)
                 time.sleep(20)
                 
         
