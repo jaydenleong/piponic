@@ -83,7 +83,7 @@ class adc_sensors(object):
     def test_ph():
         while True:
             read_ph()
-            if (int(read_ph()<= 6)):
+            if (int(read_ph()<= 11)):
                 pump_open()
                 time.sleep(10)
                 
