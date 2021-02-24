@@ -65,7 +65,8 @@ class adc_sensors(object):
         
     def read_waterlevel(self):
         try:
-            self.level = GPIO.input(pins.WATER_LEVEL)
+            #self.level = GPIO.input(pins.WATER_LEVEL)
+            self.level = GPIO.input(11)
             return self.level
         except:
             GPIO.cleanup()        
