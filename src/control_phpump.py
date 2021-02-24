@@ -1,4 +1,3 @@
-
 Python script to read analog voltage values from ADS1115 16bit ADC with PGA
 Author: Carson Berry 
 Date: February 2nd, 2021
@@ -46,11 +45,14 @@ class adc_sensors(object):
 
     def init_leak(self):
         self.leak_sensor= AnalogIn(self.ads,ADS.P0)
+        
+    def water_level_init(self):
+        self.level = 0
+        self.setup()
+        self.read() # update level 
+         
          
     def init_ph(self):
-        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
-
-    def init_pH(self):
         self.pH_sensor= AnalogIn(self.ads,ADS.P1)
        
     def read_leak(self):
@@ -58,17 +60,20 @@ class adc_sensors(object):
 
     def read_pH(self):
         pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-1.65)*(-3.3)
+        pH = 7.7 +(pH_voltage-14.7/10)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
         return pH
-
-    def read_ph(self):
-        pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-1.65)*(-3.3)
-        return pH
+        
+    def read_waterlevel(self):
+        try:
+            self.level = GPIO.input(pins.WATER_LEVEL)
+            return self.level
+        except:
+            GPIO.cleanup()        
+            return -1
         
     def pump_open():
         print 'pump opened'
-        GPIO.output(9,GPIO.HIGH)
+        GPIO.output(9,GPIO.HIGH) #9 for the relay pin on pH pump
         time.sleep(1)
         GPIO.output(9,GPIO.LOW)
     #Here I add the function of the timer
@@ -79,12 +84,21 @@ class adc_sensors(object):
             read_ph()
             if (int(read_ph()<= 6)):
                 pump_open()
+                time.sleep(10)
+                
+    def test_waterlevel():
+        while True: 
+            read_leak()
+            if (read_waterlevel()== -1):
+                GPIO.output(8,HIGH)
+                time.sleep(1)
+                GPIO.output(9,GPIO.LOW)
+                time.sleep(20)
                 
         
-    thread = threading.Thread(target=test_ph)
-    thread.start()    
         
-  
-            
+    thread1 = threading.Thread(target=test_ph)
+    thread2 = threading.Thread(target=test_waterlevel)
     
-        
+    thread1.start()    
+    thread2.start()
