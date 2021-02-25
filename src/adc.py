@@ -84,9 +84,9 @@ class adc_sensors(object):
         pH = 7.7 +(pH_voltage-14.7/10)*(-3.3)
         return pH
 
-    def read_battery(self)
+    def read_battery(self):
         return self.battery_sensor.voltage
 
-    def read_internal_leak(self)
+    def read_internal_leak(self):
         return self.internal_leak.voltage
 

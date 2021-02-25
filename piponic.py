@@ -296,7 +296,7 @@ def main():
                             'pH': device.pH,
                             'leak': device.leak,
                             'water_level': device.water_level, 
-                            'battery_voltage': device.battery_voltage
+                            'battery_voltage': device.battery_voltage,
                             'internal_leak': device.internal_leak})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
