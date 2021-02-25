@@ -88,6 +88,9 @@ class Device(object):
         self.adc_sensors = adc.adc_sensors()
         self.water_level_sensor = WL.water_level()
         self.water_level = 0
+        self.battery_voltage = 0
+        self.internal_leak = 0
+
         
         
         self.connected = False
@@ -106,7 +109,7 @@ class Device(object):
 
         self.water_solenoid_on = False
         self.water_solenoid = self.relay
-        self.water_solenoid.init(pins.RELAY3)
+        self.water_solenoid.init(pins.RELAY3) #TODO: change this to pins.RELAY2 for the model at Benny's 
 
 
     def update_sensor_data(self):
@@ -116,9 +119,14 @@ class Device(object):
         """
         self.temperature = temp.read()
         try:
-            self.pH = self.adc_sensors.read_pH()
-            self.leak = self.adc_sensors.read_leak()
-            self.water_level = self.water_level_sensor.read()
+            self.pH =               self.adc_sensors.read_pH()
+            self.leak =             self.adc_sensors.read_leak()
+            self.battery_voltage =  self.adc_sensors.read_battery()
+            self.internal_leak =    self.adc_sensors.read_internal_leak()
+
+            self.water_level =      self.water_level_sensor.read()
+            
+            
         except:
             print('Error ADC or I2C Error')
             self.exit()
@@ -284,7 +292,12 @@ def main():
     
         # Report the device's temperature to the server by serializing it
         # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature,'pH': device.pH,'leak': device.leak,'water_level': device.water_level})
+        payload = json.dumps({'temperature': device.temperature,
+                            'pH': device.pH,
+                            'leak': device.leak,
+                            'water_level': device.water_level, 
+                            'battery_voltage': device.battery_voltage
+                            'internal_leak': device.internal_leak})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
