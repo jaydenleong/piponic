@@ -28,14 +28,7 @@ class adc_sensors(object):
     
   
 
-    def __init__(self):
-    
-        self.ads=0
-        self.init_i2c()
-        self.leak_sensor = 0
-        self.init_leak()
-        self.pH_sensor = 0
-        self.init_pH()
+
 
     def init_i2c(self):
         #define i2c object
@@ -54,6 +47,16 @@ class adc_sensors(object):
          
     def init_ph(self):
         self.pH_sensor= AnalogIn(self.ads,ADS.P1)
+        
+        
+    def __init__(self):
+    
+        self.ads=0
+        self.init_i2c()
+        self.leak_sensor = 0
+        self.init_leak()
+        self.pH_sensor = 0
+        self.init_pH()
        
     def read_leak(self):
         return self.leak_sensor.voltage
