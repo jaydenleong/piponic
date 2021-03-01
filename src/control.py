@@ -94,7 +94,7 @@ class adc_sensors(object):
         while True: 
             read_leak()
             if (read_waterlevel()== -1):
-                GPIO.output(8,HIGH)
+                GPIO.output(8,GPIO.HIGH)
                 time.sleep(1)
                 GPIO.output(8,GPIO.LOW)
                 time.sleep(20)
