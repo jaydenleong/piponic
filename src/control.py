@@ -56,7 +56,7 @@ class adc_sensors(object):
         self.leak_sensor = 0
         self.init_leak()
         self.pH_sensor = 0
-        self.init_pH()
+        self.init_ph()
        
     def read_leak(self):
         return self.leak_sensor.voltage
@@ -99,9 +99,9 @@ class adc_sensors(object):
                 GPIO.output(8,GPIO.LOW)
                 time.sleep(20)
                  
-x = adc_sensors()    
-thread1 = threading.Thread(target=x.test_ph())
-thread2 = threading.Thread(target=x.test_waterlevel())
+ 
+thread1 = threading.Thread(target=adc_sensor.test_ph())
+thread2 = threading.Thread(target=adc_sensor.test_waterlevel())
     
 thread1.start()    
 thread2.start()
