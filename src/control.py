@@ -101,8 +101,8 @@ def test_waterlevel(self):
                  
  
 
-thread1 = threading.Thread(target=x, args = ())
-thread2 = threading.Thread(target=y, args = ())
+thread1 = threading.Thread(target=test_waterlevel, args = ())
+thread2 = threading.Thread(target=test_ph, args = ())
     
 thread1.start()    
 thread2.start()
