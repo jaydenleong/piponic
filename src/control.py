@@ -101,8 +101,8 @@ class adc_sensors(object):
                  
  
 
-thread1 = threading.Thread(target=test_ph(), args = ())
-thread2 = threading.Thread(target=test_waterlevel, args = ())
+thread1 = threading.Thread(target=test_ph(self), args = ())
+thread2 = threading.Thread(target=test_waterlevel(self), args = ())
     
 thread1.start()    
 thread2.start()
