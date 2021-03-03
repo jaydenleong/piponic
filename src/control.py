@@ -22,7 +22,7 @@ from adafruit_ads1x15.analog_in import AnalogIn
 
 # Add timers for different outputs ex. ph_timer, water_level_timer, temp_timer
 
-class adc_sensors(object):
+#class adc_sensors(object):
 
 
     
@@ -101,8 +101,8 @@ class adc_sensors(object):
                  
  
 
-thread1 = threading.Thread(target=test_ph(self), args = ())
-thread2 = threading.Thread(target=test_waterlevel(self), args = ())
+    thread1 = threading.Thread(target=x, args = ())
+    thread2 = threading.Thread(target=y, args = ())
     
-thread1.start()    
-thread2.start()
+    thread1.start()    
+    thread2.start()
