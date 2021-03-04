@@ -45,13 +45,13 @@ class ph_control(object):
         pH = 7.7 +(pH_voltage-1.65)*(-3.3)
         return pH
 	
-	def pump_open(self):
-		print('pump opened')
+    def pump_open(self):
+	print('pump opened')
 	
-	def test_ph(self):
-		while True:
-			pump_open()
-			time.sleep(5)
+    def test_ph(self):
+	while True:
+		pump_open()
+		time.sleep(5)
 
 class wl_control(object):
 	def __init__(self):
