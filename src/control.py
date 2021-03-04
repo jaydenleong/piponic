@@ -62,6 +62,7 @@ class adc_sensors(object):
         
    
     def pump_open(self):
+        GPIO.setup(9, GPIO.OUT)
         print ('pump opened')
         GPIO.output(9,GPIO.HIGH) #9 for the relay pin on pH pump
         time.sleep(1)
@@ -121,6 +122,7 @@ class waterlevel(object):
         while True: 
             read_leak()
             if (read_waterlevel()== -1):
+                GPIO.setup(8, GPIO.OUT)
                 GPIO.output(8,GPIO.HIGH)
                 time.sleep(1)
                 GPIO.output(8,GPIO.LOW)
