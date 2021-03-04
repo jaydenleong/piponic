@@ -102,7 +102,7 @@ FirstThread.start()
 
 #Create Class
 Second = ph_control()
-SecondThread=Thread(target=First.test_ph)
+SecondThread=Thread(target=Second.test_ph)
 SecondThread.start()
 		
 
