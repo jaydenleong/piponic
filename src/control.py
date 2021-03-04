@@ -134,14 +134,14 @@ class waterlevel(object):
 #Create Class
 First = waterlevel()
 #Create Thread
-FirstThread = Thread(target=First.run) 
+FirstThread = Thread(target=First.test_waterlevel) 
 #Start Thread 
 FirstThread.start()
 
 #Create Class
 Second = adc_sensors()
 #Create Thread
-SecondThread = Thread(target=Second.run) 
+SecondThread = Thread(target=Second.pump_open) 
 #Start Thread 
 SecondThread.start()
 
