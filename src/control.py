@@ -54,7 +54,7 @@ class ph_control(object):
             time.sleep(5)
 
 class wl_control(object):
-	def __init__(self):
+    def __init__(self):
         self.ads=0
         self.init_i2c()
         self.leak_sensor = 0
