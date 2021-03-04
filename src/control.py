@@ -93,7 +93,7 @@ class waterlevel(object):
         self.setup()
         self.read() # update level 
         
-     def read_waterlevel(self):
+    def read_waterlevel(self):
         try:
             #self.level = GPIO.input(pins.WATER_LEVEL)
             self.level = GPIO.input(11)
