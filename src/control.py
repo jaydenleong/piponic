@@ -79,6 +79,26 @@ class adc_sensors(object):
 
 class waterlevel(object):
     
+   
+    def init_i2c(self):
+        #define i2c object
+        i2c = busio.I2C(board.SCL, board.SDA)
+        #create object
+        self.ads = ADS.ADS1115(i2c) 
+
+    def init_leak(self):
+        self.leak_sensor= AnalogIn(self.ads,ADS.P0)
+        
+    def water_level_init(self):
+        self.level = 0
+        self.setup()
+        self.read() # update level 
+         
+         
+    def init_ph(self):
+        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
+        
+        
     def __init__(self):
     
         self.ads=0
@@ -87,20 +107,15 @@ class waterlevel(object):
         self.init_leak()
         self.pH_sensor = 0
         self.init_ph()
+       
+    def read_leak(self):
+        return self.leak_sensor.voltage
+
+    def read_pH(self):
+        pH_voltage = self.pH_sensor.voltage
+        pH = 7.7 +(pH_voltage-14.7/10)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
+        return pH
         
-    def water_level_init(self):
-        self.level = 0
-        self.setup()
-        self.read() # update level 
-        
-    def read_waterlevel(self):
-        try:
-            #self.level = GPIO.input(pins.WATER_LEVEL)
-            self.level = GPIO.input(11)
-            return self.level
-        except:
-            GPIO.cleanup()        
-            return -1
         
     def test_waterlevel(self):
         while True: 
