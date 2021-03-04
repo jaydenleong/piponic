@@ -75,7 +75,8 @@ class adc_sensors(object):
             read_ph()
             if (int(read_ph()<= 11)):
                 pump_open()
-                time.sleep(10)
+            print ('thread triggered 1')
+            time.sleep(10)
                 
 
 class waterlevel(object):
