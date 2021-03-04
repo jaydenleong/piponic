@@ -24,12 +24,6 @@ from adafruit_ads1x15.analog_in import AnalogIn
 
 class adc_sensors(object):
 
-
-    
-  
-
-
-
     def init_i2c(self):
         #define i2c object
         i2c = busio.I2C(board.SCL, board.SDA)
@@ -66,15 +60,7 @@ class adc_sensors(object):
         pH = 7.7 +(pH_voltage-14.7/10)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
         return pH
         
-    def read_waterlevel(self):
-        try:
-            #self.level = GPIO.input(pins.WATER_LEVEL)
-            self.level = GPIO.input(11)
-            return self.level
-        except:
-            GPIO.cleanup()        
-            return -1
-        
+   
     def pump_open(self):
         print ('pump opened')
         GPIO.output(9,GPIO.HIGH) #9 for the relay pin on pH pump
@@ -90,6 +76,47 @@ class adc_sensors(object):
                 pump_open()
                 time.sleep(10)
                 
+
+class waterlevel(object):
+
+     def read_waterlevel(self):
+        try:
+            #self.level = GPIO.input(pins.WATER_LEVEL)
+            self.level = GPIO.input(11)
+            return self.level
+        except:
+            GPIO.cleanup()        
+            return -1
+        
+        
+    def init_i2c(self):
+        #define i2c object
+        i2c = busio.I2C(board.SCL, board.SDA)
+        #create object
+        self.ads = ADS.ADS1115(i2c) 
+
+    def init_leak(self):
+        self.leak_sensor= AnalogIn(self.ads,ADS.P0)
+        
+    def water_level_init(self):
+        self.level = 0
+        self.setup()
+        self.read() # update level 
+         
+         
+    def init_ph(self):
+        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
+        
+        
+    def __init__(self):
+    
+        self.ads=0
+        self.init_i2c()
+        self.leak_sensor = 0
+        self.init_leak()
+        self.pH_sensor = 0
+        self.init_ph()
+        
     def test_waterlevel(self):
         while True: 
             read_leak()
@@ -98,9 +125,25 @@ class adc_sensors(object):
                 time.sleep(1)
                 GPIO.output(8,GPIO.LOW)
                 time.sleep(20)
-                 
+        
+        
+        
+        
+        
  
+#Create Class
+First = waterlevel()
+#Create Thread
+FirstThread = Thread(target=First.run) 
+#Start Thread 
+FirstThread.start()
 
-    thread1 = thread.start_new_thread(target=test_waterlevel)
-    thread2 = thread.start_new_thread(target=test_ph)
+#Create Class
+Second = adc_sensors()
+#Create Thread
+SecondThread = Thread(target=Second.run) 
+#Start Thread 
+SecondThread.start()
+
+
 
