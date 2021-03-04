@@ -46,12 +46,12 @@ class ph_control(object):
         return pH
 	
     def pump_open(self):
-	print('pump opened')
+        print('pump opened')
 	
     def test_ph(self):
-	while True:
-		pump_open()
-		time.sleep(5)
+        while True:
+            pump_open()
+            time.sleep(5)
 
 class wl_control(object):
 	def __init__(self):
@@ -90,9 +90,9 @@ class wl_control(object):
         pH = 7.7 +(pH_voltage-1.65)*(-3.3)
         return pH
 		
-	def test_wl(self):
-		print('valve opened')
-		time.sleep(6)
+    def test_wl(self):
+        print('valve opened')
+        time.sleep(6)
 		
 		
 #Create Class
@@ -101,8 +101,8 @@ FirstThread=Thread(target=First.test_wl)
 FirstThread.start()
 
 #Create Class
-Second = wl_control()
-SecondThread=Thread(target=First.test_wl)
+Second = ph_control()
+SecondThread=Thread(target=First.test_ph)
 SecondThread.start()
 		
 
