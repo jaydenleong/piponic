@@ -50,7 +50,6 @@ class ph_control(object):
     def test_ph(self):
         while True:
             print('pump opened')
-            GPIO.setmode（GPIO.BCM）
             GPIO.setup(26,GPIO.OUT)
             GPIO.output (26,GPIO.HIGH)
             time.sleep(5)
