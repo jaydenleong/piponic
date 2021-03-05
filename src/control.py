@@ -89,8 +89,9 @@ class wl_control(object):
         return pH
 		
     def test_wl(self):
-        print('valve opened')
-        time.sleep(6)
+	while True:
+            print('valve opened')
+            time.sleep(6)
 		
 		
 #Create Class
