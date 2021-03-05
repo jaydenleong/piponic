@@ -51,7 +51,7 @@ class ph_control(object):
         pH_voltage = self.pH_sensor.voltage
         pH = 7.7 +(pH_voltage-1.65)*(-3.3)
         while True:
-	    time.sleep(5)
+            time.sleep(5)
 	    print('loop start')
 	    if (pH<=10):
                 print('pump opened')
