@@ -50,7 +50,7 @@ class ph_control(object):
     def test_ph(self):
         pH_voltage = self.pH_sensor.voltage
         pH = 7.7 +(pH_voltage-1.65)*(-3.3)
-        if True:
+        if (pH<=14):
             print('pump opened')
             GPIO.setup(26,GPIO.OUT)
             GPIO.output (26,GPIO.HIGH)
