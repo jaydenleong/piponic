@@ -57,7 +57,7 @@ class ph_control(object):
             print('loop start')
             self.pH_sensor= AnalogIn(self.ads,ADS.P2)
             pH_voltage = self.pH_sensor.voltage
-            pH = 7.7 +(pH_voltage-1.65)*(-3.3)
+            pH = 4.7 +(pH_voltage-1.65)*(-3.3)
             if (pH<=10):
                 print('pump opened')
                 GPIO.setup(26,GPIO.OUT)
