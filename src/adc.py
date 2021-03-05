@@ -45,10 +45,10 @@ class adc_sensors(object):
         self.leak_sensor= AnalogIn(self.ads,ADS.P0)
          
     def init_ph(self):
-        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
+        self.pH_sensor= AnalogIn(self.ads,ADS.P2)
 
     def init_pH(self):
-        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
+        self.pH_sensor= AnalogIn(self.ads,ADS.P2)
        
     def read_leak(self):
         return self.leak_sensor.voltage
