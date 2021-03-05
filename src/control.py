@@ -90,8 +90,8 @@ class wl_control(object):
 		
     def test_wl(self):
 	while True:
-            print('valve opened')
-            time.sleep(6)
+        	print('valve opened')
+		time.sleep(6)
 		
 		
 #Create Class
