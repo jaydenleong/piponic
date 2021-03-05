@@ -5,6 +5,7 @@ from adafruit_ads1x15.analog_in import AnalogIn
 from threading import Thread
 import RPi.GPIO as GPIO
 import time
+import src.pins
 
 
 
@@ -49,6 +50,11 @@ class ph_control(object):
     def test_ph(self):
         while True:
             print('pump opened')
+            GPIO.setmode（GPIO.BCM）
+            GPIO.setup(26,GPIO.OUT)
+            GPIO.output (26,GPIO.HIGH)
+            time.sleep(5)
+            GPIO.output (26,GPIO.LOW)
             time.sleep(5)
 
 class wl_control(object):
@@ -90,7 +96,7 @@ class wl_control(object):
 		
     def test_wl(self):
         while True:
-            print('valve opened')
+            #print('valve opened')
             time.sleep(6)
 		
 		
@@ -104,6 +110,3 @@ Second = ph_control()
 SecondThread=Thread(target=Second.test_ph)
 SecondThread.start()
 		
-
-	
-	
