@@ -48,7 +48,9 @@ class ph_control(object):
 	
  
     def test_ph(self):
-        while True:
+        pH_voltage = self.pH_sensor.voltage
+        pH = 7.7 +(pH_voltage-1.65)*(-3.3)
+        if True:
             print('pump opened')
             GPIO.setup(26,GPIO.OUT)
             GPIO.output (26,GPIO.HIGH)
@@ -108,4 +110,3 @@ FirstThread.start()
 Second = ph_control()
 SecondThread=Thread(target=Second.test_ph)
 SecondThread.start()
-		
