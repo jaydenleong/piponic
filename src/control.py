@@ -88,7 +88,7 @@ class wl_control(object):
         pH = 7.7 +(pH_voltage-1.65)*(-3.3)
         return pH
 		
-    def test_ph(self):
+    def test_wl(self):
         while True:
             print('valve opened')
             time.sleep(6)
