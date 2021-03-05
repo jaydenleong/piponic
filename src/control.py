@@ -53,7 +53,7 @@ class ph_control(object):
         pH_voltage = self.pH_sensor.voltage
         pH = 4.7 +(pH_voltage-1.65)*(-3.3)
         while True:
-            time.sleep(5)
+            time.sleep(2)
             print('loop start')
             self.pH_sensor= AnalogIn(self.ads,ADS.P2)
             pH_voltage = self.pH_sensor.voltage
@@ -62,9 +62,9 @@ class ph_control(object):
                 print('pump opened')
                 GPIO.setup(26,GPIO.OUT)
                 GPIO.output (26,GPIO.HIGH)
-                time.sleep(5)
+                time.sleep(2)
                 GPIO.output (26,GPIO.LOW)
-                time.sleep(5)
+                time.sleep(2)
 
 class wl_control(object):
     def __init__(self):
