@@ -1,3 +1,18 @@
+
+#----------------------------------------------Template--------------------------------------------------#
+# This is a brief template on creating *new threading modules*
+# 1. Create a class, for example: class ph_control(object):
+# 2. Copy all the exiting initialization functions for sensors
+# 3. Add the new initialization function for the new sensor/device
+# 4. Set up the threading module at the end of this file, this includes:
+# 4.1. Define your class, for example: VARIABLE_NAME = NAME_OF_THE_CLASS()
+# 4.2. Create the thread module, for example: NAME_OF_THREAD = Thread(target = VARIABLE_NAME.FUNCTION_NAME) 
+# Notice that the FUNCTION_NAME should be the function in the class (defined before), and is the one that you would like it to iterate
+# 4.3. Start the thread, for example: NAME_OF_THREAD.start()
+
+
+
+
 import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
