@@ -39,6 +39,14 @@ class adc_sensors(object):
         self.internal_leak=0
         self.init_internal_leak()
 
+        # warning thresholds
+        self.low_battery =      1 #V
+        self.leak_threshold =   0.25 #V 
+        self.low_pH =           4.5  #pH
+        self.high_pH =          8    #pH
+        self.delta_pH =         1.0  #pH/10min
+
+
     def init_i2c(self):
         #define i2c object
         i2c = busio.I2C(board.SCL, board.SDA)
