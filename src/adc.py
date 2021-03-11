@@ -34,12 +34,26 @@ class adc_sensors(object):
         self.init_leak()
         self.pH_sensor = 0
         self.init_pH()
+        self.battery_sensor=0
+        self.init_battery()
+        self.internal_leak=0
+        self.init_internal_leak()
+
+        # warning thresholds
+        self.low_battery =      1 #V
+        self.leak_threshold =   0.25 #V 
+        self.low_pH =           4.5  #pH
+        self.high_pH =          8    #pH
+        self.delta_pH =         1.0  #pH/10min
+
 
     def init_i2c(self):
         #define i2c object
         i2c = busio.I2C(board.SCL, board.SDA)
         #create object
         self.ads = ADS.ADS1115(i2c) 
+
+############# Initialize all the ADC pins ##################
 
     def init_leak(self):
         self.leak_sensor= AnalogIn(self.ads,ADS.P0)
@@ -49,18 +63,38 @@ class adc_sensors(object):
 
     def init_pH(self):
         self.pH_sensor= AnalogIn(self.ads,ADS.P1)
-       
+
+    def init_battery(self):
+        self.battery_sensor= AnalogIn(self.ads,ADS.P2)       
+
+    def init_internal_leak(self):
+        self.internal_leak= AnalogIn(self.ads,ADS.P3)     
+
+
+############### READ functions ############################
     def read_leak(self):
         return self.leak_sensor.voltage
 
     def read_pH(self):
         pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-1.65)*(-3.3)
+        pH = 7.7 +(pH_voltage-14.7/10)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
+        return pH
+
+    #test out an experimental quadratic formula
+    def read_pH_ex(self):
+        pH_voltage = self.pH_sensor.voltage
+        #pH_voltage = pH_voltage*14.7/10 #voltage divider
+        pH = -5.6732*pH_voltage**2+6.7868*pH_voltage+12.743
         return pH
 
     def read_ph(self):
         pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-1.65)*(-3.3)
+        pH = 7.7 +(pH_voltage-14.7/10)*(-3.3)
         return pH
 
+    def read_battery(self):
+        return self.battery_sensor.voltage
+
+    def read_internal_leak(self):
+        return self.internal_leak.voltage
 

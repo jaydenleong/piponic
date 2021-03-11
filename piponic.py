@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2017 Google Inc. All rights reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,6 +56,7 @@ import src.relay as relay
 import src.adc as adc
 import src.temp as temp
 import src.pins as pins
+import src.water_level as WL
 
 
 def create_jwt(project_id, private_key_file, algorithm):
@@ -85,6 +87,22 @@ class Device(object):
         self.pH = 7
         self.leak = 0
         self.adc_sensors = adc.adc_sensors()
+        self.water_level_sensor = WL.water_level()
+        self.water_level = 0
+        self.battery_voltage = 0
+        self.internal_leak = 0
+        
+        # sensor warning levels 
+        self.min_temp = 10 #degrees C
+        self.max_temp = 25 #degrees C
+        self.delta_temp = 5 #degrees in 30 min
+
+            #default values coded in adc.py
+        self.min_pH =           self.adc_sensors.low_pH
+        self.max_pH =           self.adc_sensors.high_pH
+        self.delta_pH =         self.adc_sensors.delta_pH #pH/min
+        self.low_battery =      self.adc_sensors.low_battery
+        self.leak_threshold =   self.adc_sensors.leak_threshold
         
         
         self.connected = False
@@ -103,22 +121,74 @@ class Device(object):
 
         self.water_solenoid_on = False
         self.water_solenoid = self.relay
-        self.water_solenoid.init(pins.RELAY3)
+        self.water_solenoid.init(pins.RELAY3) #TODO: change this to pins.RELAY2 for the model at Benny's 
 
 
     def update_sensor_data(self):
-        """Pretend to read the device's sensor data.
-        If the fan is on, assume the temperature decreased one degree,
-        otherwise assume that it increased one degree.
+        """Read Sensor Data
         """
         self.temperature = temp.read()
         try:
-            self.pH = self.adc_sensors.read_pH()
-            self.leak = self.adc_sensors.read_leak()
+            self.pH =               self.adc_sensors.read_pH()
+            self.leak =             self.adc_sensors.read_leak()
+            self.battery_voltage =  self.adc_sensors.read_battery()
+            self.internal_leak =    self.adc_sensors.read_internal_leak()
+
         except:
             print('Error ADC or I2C Error')
+            self.exit()
+
+        try:
+            self.water_level =      self.water_level_sensor.read()
+        except:
+            print('Water Level not read correctly')
+            self.exit()
+
 
         print('All sensors successfully read!')   
+
+    def check_temp_data(self):
+        """Check temperature data for extraneous values or rapid changes 
+        """
+        #temperature low or high
+        if(self.temperature<self.min_temp or self.temperature>self.max_temp):
+            return 1
+        #temperature good
+        else:
+            return 0
+
+    def check_pH_data(self):
+        """Check pH data for extraneous values or rapid changes 
+        """
+        #pH low or high
+        if(self.pH<self.min_pH or self.pH>self.max_pH):
+            return 1
+        #pH good
+        else:
+            return 0
+
+    def check_leak_data(self):
+        """Check leak data for extraneous values or rapid changes 
+        """
+        #leak high?
+        if(self.leak>self.leak_threshold or self.internal_leak>self.leak_threshold):
+            return 1
+        else: 
+            return 0
+    
+    def check_battery_data(self):
+            """Check battery data for extraneous values or rapid changes 
+            """
+            #battery low?
+            if(self.battery_voltage<self.low_battery):
+                return 1
+            else: 
+                return 0
+    
+
+
+    def exit(self): 
+        GPIO.cleanup()
 
     def wait_for_connection(self, timeout):
         """Wait for the device to become connected."""
@@ -166,6 +236,8 @@ class Device(object):
         # The config is passed in the payload of the message. In this example,
         # the server sends a serialized JSON string.
         data = json.loads(payload)
+
+        # Do something if message meets your checks. 
         if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
             # If changing the state of the fan, print a message and
             # update the internal state.
@@ -267,19 +339,43 @@ def main():
     # Subscribe to the config topic.
     client.subscribe(mqtt_config_topic, qos=1)
 
-    # Update and publish temperature readings at a rate of one per second.
+
+    #number of samples to take before publishing 
+    update_period = 30 #minutes
+
+    # Publish sensor readings every 30 minutes.
     for _ in range(args.num_messages):
-        # In an actual device, this would read the device's sensors. Here,
-        # you update the temperature based on whether the fan is on.
-        device.update_sensor_data()
+        
+        # Samples sensors every 1 minute and checks them 
+        for i in range(update_period):
+            # READ SENSOR DATA
+            device.update_sensor_data()
+
+            #check for warnings 
+            if( device.check_leak_data() 
+                or device.check_pH_data() 
+                or device.check_temp_data()):
+                break
+            #
+            if(device.check_battery_data()):
+                print('Low Battery Voltage: ',device.battery_voltage)
+                # go into a low power mode
+
+                
+            time.sleep(60) #sleep for 1 min
+
     
-        # Report the device's temperature to the server by serializing it
+        # Report the sensor data to the server by serializing it
         # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature,'pH': device.pH,'leak': device.leak})
+        payload = json.dumps({'temperature': device.temperature,
+                            'pH': device.pH,
+                            'leak': device.leak,
+                            'water_level': device.water_level, 
+                            'battery_voltage': device.battery_voltage,
+                            'internal_leak': device.internal_leak})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
-        # Send events every second.
-        time.sleep(30)
+        time.sleep(60) 
      
     client.disconnect()
     client.loop_stop()

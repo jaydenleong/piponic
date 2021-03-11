@@ -14,11 +14,9 @@ Outputs: zero if successfull
 
 Usage: 
 import relay
-relay.init_one()
-relay.on1()
-relay.off1()
-relay.demo()
-
+relay.init(src.pins.RELAY1)
+relay.on(src.pins.RELAY1)
+relay.off(src.pins.RELAY1)
 
 '''
 
@@ -60,7 +58,7 @@ def off(pin):
 
 
 #Demo function to verify that the relay works and that ll your connections are good
-#note: listen for the satisfying cockroach clicktty clack but don't wear out the relays!
+#note: listen for the satisfying cockroach clickitty clack but don't wear out the relays!
 
 def demo():
     try:

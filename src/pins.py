@@ -8,4 +8,5 @@ I2C_SDA = 2
 I2C_SCL = 3
 
 TEMP = 4
+WATER_LEVEL = 17
 
