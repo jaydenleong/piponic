@@ -167,7 +167,7 @@ class Device(object):
         """Check leak data for extraneous values or rapid changes 
         """
         #leak high?
-        if(self.leak>self.leak_threshold):
+        if(self.leak>self.leak_threshold or self.internal_leak>self.leak_threshold):
             return 1
         else: 
             return 0
@@ -371,7 +371,7 @@ def main():
                             'internal_leak': device.internal_leak})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
-        
+        time.sleep(60) 
      
     client.disconnect()
     client.loop_stop()
