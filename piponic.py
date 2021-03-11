@@ -134,12 +134,16 @@ class Device(object):
             self.battery_voltage =  self.adc_sensors.read_battery()
             self.internal_leak =    self.adc_sensors.read_internal_leak()
 
-            self.water_level =      self.water_level_sensor.read()
-            
-            
         except:
             print('Error ADC or I2C Error')
             self.exit()
+
+        try:
+            self.water_level =      self.water_level_sensor.read()
+        except:
+            print('Water Level not read correctly')
+            self.exit()
+
 
         print('All sensors successfully read!')   
 
