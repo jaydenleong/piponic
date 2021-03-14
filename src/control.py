@@ -32,6 +32,7 @@ class ph_control(object):
         self.init_leak()
         self.pH_sensor = 0
         self.init_pH()
+	self.x = 4.7
 
     def init_i2c(self):
         #define i2c object
@@ -60,19 +61,25 @@ class ph_control(object):
         pH_voltage = self.pH_sensor.voltage
         pH = 7.7 +(pH_voltage-1.65)*(-3.3)
         return pH
+
+
+    def calibrate(self):
+	x = read
 	
  
     def test_ph(self):
         print('init start')
+	print('the value of x is', end=' ')
+	print(self.x)
         self.pH_sensor= AnalogIn(self.ads,ADS.P2)
         pH_voltage = self.pH_sensor.voltage
-        pH = 4.7 +(pH_voltage-1.65)*(-3.3)
+        pH = 4.7 +(pH_voltage-1.65)*(-3.3)		#test self.x here
         while True:
             time.sleep(2)
             print('loop start')
             self.pH_sensor= AnalogIn(self.ads,ADS.P2)
             pH_voltage = self.pH_sensor.voltage
-            pH = 4.7 +(pH_voltage-1.65)*(-3.3)
+            pH = 4.7 +(pH_voltage-1.65)*(-3.3)		#test self.x here
             if (pH<=8.2):
                 print('pump opened')
                 GPIO.setup(26,GPIO.OUT)
