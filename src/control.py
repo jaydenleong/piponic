@@ -33,6 +33,7 @@ class ph_control(object):
         self.pH_sensor = 0
         self.init_pH()
 	self.x = 4.7
+	self.desired_ph = 7
 
     def init_i2c(self):
         #define i2c object
@@ -80,7 +81,7 @@ class ph_control(object):
             self.pH_sensor= AnalogIn(self.ads,ADS.P2)
             pH_voltage = self.pH_sensor.voltage
             pH = 4.7 +(pH_voltage-1.65)*(-3.3)		#test self.x here
-            if (pH<=8.2):
+            if (pH<=8.2):				#test self.desired_ph here
                 print('pump opened')
                 GPIO.setup(26,GPIO.OUT)
                 GPIO.output (26,GPIO.HIGH)
