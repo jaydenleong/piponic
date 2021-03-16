@@ -9,6 +9,11 @@
 # 4.2. Create the thread module, for example: NAME_OF_THREAD = Thread(target = VARIABLE_NAME.FUNCTION_NAME) 
 # Notice that the FUNCTION_NAME should be the function in the class (defined before), and is the one that you would like it to iterate
 # 4.3. Start the thread, for example: NAME_OF_THREAD.start()
+#-----------------------------------------------CODE COMPLETE---------------------------------------------#
+# class ph_control(object):
+# VARIABLE_NAME = NAME_OF_THE_CLASS()
+# NAME_OF_THREAD = Thread(target = VARIABLE_NAME.FUNCTION_NAME) 
+# NAME_OF_THREAD.start()
 
 
 
@@ -29,10 +34,9 @@ class ph_control(object):
         self.ads=0
         self.init_i2c()
         self.leak_sensor = 0
-        self.init_leak()
+ #       self.init_leak()
         self.pH_sensor = 0
         self.init_pH()
-	self.x = 4.7
 	self.desired_ph = 7
 
     def init_i2c(self):
@@ -79,9 +83,8 @@ class ph_control(object):
             time.sleep(2)
             print('loop start')
             self.pH_sensor= AnalogIn(self.ads,ADS.P2)
-            pH_voltage = self.pH_sensor.voltage
-            pH = 4.7 +(pH_voltage-1.65)*(-3.3)		#test self.x here
-            if (pH<=8.2):				#test self.desired_ph here
+            pH = self.read_pH()
+            if (pH<=self.desired_pH):			#test self.desired_ph here
                 print('pump opened')
                 GPIO.setup(26,GPIO.OUT)
                 GPIO.output (26,GPIO.HIGH)
@@ -89,7 +92,7 @@ class ph_control(object):
                 GPIO.output (26,GPIO.LOW)
                 time.sleep(2)
 
-class wl_control(object):
+class wl_control(object):				#It turns out to be a bug when there's no (object)
     def __init__(self):
         self.ads=0
         self.init_i2c()
