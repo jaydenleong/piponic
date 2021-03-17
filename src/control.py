@@ -33,11 +33,13 @@ class ph_control(object):
     def __init__(self):
         self.ads=0
         self.init_i2c()
-        self.leak_sensor = 0
- #       self.init_leak()
+
         self.pH_sensor = 0
         self.init_pH()
-	self.desired_ph = 7
+        self.pH_intercept = 7
+        self.pH_offset = 1.65
+        self.pH_slope = -3.3
+	    self.desired_ph = 7
 
     def init_i2c(self):
         #define i2c object
@@ -45,31 +47,63 @@ class ph_control(object):
         #create object
         self.ads = ADS.ADS1115(i2c) 
 
-    def init_leak(self):
-        self.leak_sensor= AnalogIn(self.ads,ADS.P0)
-         
     def init_ph(self):
         self.pH_sensor= AnalogIn(self.ads,ADS.P2)
 
     def init_pH(self):
         self.pH_sensor= AnalogIn(self.ads,ADS.P2)
        
-    def read_leak(self):
-        return self.leak_sensor.voltage
-
     def read_pH(self):
         pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-1.65)*(-3.3)
+        pH = self.pH_intercept +(pH_voltage-self.pH_offset)*(self.pH_slope)
         return pH
 
     def read_ph(self):
         pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-1.65)*(-3.3)
+        pH = self.pH_intercept +(pH_voltage-self.pH_offset)*(self.pH_slope)
         return pH
 
+    # Calibration function
+    # Intended to assist with the calibration of the pH_probe at regular (eg. monthly) intervals 
+    #
+    # REQUIRES USER ENGAGEMENT - THEY MUST CHANGE THE pH PROBE SOLUTION WHEN PROMPTED
+    # total process will take about 3 minutes.  
+    #
+    #  inputs: self, pH of calibration solution 1 (eg 7), pH of calibration solution 2 (eg. 4)
+    # updates: self.pH_slope, self.pH_intercept
+    #use: ph_control.calibrate(self,7,4)
+    def calibrate(self, calibration_pH_1, calibration_pH_2):
+        #this function constructs a linear function of the form: 
+        # y = m(x-offset)+b
+        # or 
+        # pH = (slope)*(voltage-offset_voltage)+ pH_at_offset_voltage
+         
+        print('Please place the pH probe in the first solution with pH ',calibration_pH_1,', and wait 60 seconds.')
+         #should we wait for confirmation?          
+        for _ in range(60):
+            time.sleep(1)
+            print('.')
+        print('Reading now')   
+        v1 = self.pH_sensor.voltage # read the pH meter's voltage in the known solution
 
-    def calibrate(self):
-	x = read
+        print('Please place the pH probe in the second solution with pH ',calibration_pH_2,', and wait 60 seconds.')
+         #should we wait for confirmation?          
+        for _ in range(60):
+            time.sleep(1)
+            print('.')
+        print('Reading now')   
+        v2 = self.pH_sensor.voltage # read the pH meter's voltage in the known solution
+        
+        #calculate slope of pH-voltage curve (should be negative)
+        self.pH_slope = (calibration_pH_1-calibration_pH_2)/(v1-v2)
+
+        #pH curve 'intercept' anchored around first datapoint
+        self.pH_intercept = calibration_pH_1
+        self.pH_offset = v1
+
+
+
+            
 	
  
     def test_ph(self):
