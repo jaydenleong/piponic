@@ -108,11 +108,10 @@ class ph_control(object):
  
     def test_ph(self):
         print('init start')
-	print('the value of x is', end=' ')
-	print(self.x)
+	print('the value of x is', end=' ') # sorry these are test code that I use. Will clean this up
         self.pH_sensor= AnalogIn(self.ads,ADS.P2)
         pH_voltage = self.pH_sensor.voltage
-        pH = self.pH_offset + (pH_voltage-1.65)*(self.pH_slope)		#test self.x here
+        pH = self.pH_intercept +(pH_voltage-self.pH_offset)*(self.pH_slope)		#test self.x here
         while True:
             time.sleep(2)
             print('loop start')
