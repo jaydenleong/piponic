@@ -78,16 +78,16 @@ class ph_control(object):
         # or 
         # pH = (slope)*(voltage-offset_voltage)+ pH_at_offset_voltage
          
-        print('Please place the pH probe in the first solution with pH ',calibration_pH_1,', and wait 60 seconds.')
-         #should we wait for confirmation?          
+        print('Please place the pH probe in the first solution with pH ',calibration_pH_1,', and mix the solution with the probe. Wait 60 seconds.')
+         #should we wait for confirmation? From testing, 1 minute is not enough          
         for _ in range(60):
             time.sleep(1)
             print('.')
         print('Reading now')   
         v1 = self.pH_sensor.voltage # read the pH meter's voltage in the known solution
 
-        print('Please place the pH probe in the second solution with pH ',calibration_pH_2,', and wait 60 seconds.')
-         #should we wait for confirmation?          
+        print('Please place the pH probe in the second solution with pH ',calibration_pH_2,', and mix the solution with the probe. Wait 60 seconds.')
+         #should we wait for confirmation? From testing, 1 minute is not enough
         for _ in range(60):
             time.sleep(1)
             print('.')
@@ -112,7 +112,7 @@ class ph_control(object):
 	print(self.x)
         self.pH_sensor= AnalogIn(self.ads,ADS.P2)
         pH_voltage = self.pH_sensor.voltage
-        pH = 4.7 +(pH_voltage-1.65)*(-3.3)		#test self.x here
+        pH = self.pH_offset + (pH_voltage-1.65)*(self.pH_slope)		#test self.x here
         while True:
             time.sleep(2)
             print('loop start')
