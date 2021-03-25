@@ -137,17 +137,17 @@ class Device(object):
 
         # The config is passed in the payload of the message. In this example,
         # the server sends a serialized JSON string.
-        data = json.loads(payload)
-        if data['fan_on'] != self.fan_on:
-            # If changing the state of the fan, print a message and
-            # update the internal state.
-            self.fan_on = data['fan_on']
-            if self.fan_on:
-                print('Fan turned on.')
-                self.led.on()
-            else:
-                print('Fan turned off.')
-                self.led.off()
+        #data = json.loads(payload)
+        #if data['fan_on'] != self.fan_on:
+        #    # If changing the state of the fan, print a message and
+        #    # update the internal state.
+        #    self.fan_on = data['fan_on']
+        #    if self.fan_on:
+        #        print('Fan turned on.')
+        #        self.led.on()
+        #    else:
+        #        print('Fan turned off.')
+        #        self.led.off()
 
 def parse_command_line_args():
     """Parse command line arguments."""
@@ -234,11 +234,18 @@ def main():
     # This is the topic that the device will receive configuration updates on.
     mqtt_config_topic = '/devices/{}/config'.format(args.device_id)
 
+    # This is the topic that the device will recieve commands from
+    mqtt_command_topic = '/devices/{}/commands/#'.format(args.device_id)
+    print(mqtt_command_topic)
+
     # Wait up to 5 seconds for the device to connect.
     device.wait_for_connection(5)
 
     # Subscribe to the config topic.
     client.subscribe(mqtt_config_topic, qos=1)
+    
+    # Subscribe to the commands topic
+    client.subscribe(mqtt_command_topic, qos=1)
 
     # Update and publish temperature readings at a rate of one per second.
     for _ in range(args.num_messages):
@@ -248,11 +255,11 @@ def main():
 
         # Report the device's temperature to the server by serializing it
         # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature})
+        payload = json.dumps({'temperature': device.temperature, 'pH': device.temperature, 'battery_voltage': device.temperature, 'leak': device.temperature, 'internal_leak': device.temperature})
         print('Publishing payload', payload)
         client.publish(mqtt_telemetry_topic, payload, qos=1)
         # Send events every second.
-        time.sleep(1)
+        time.sleep(5)
 
     client.disconnect()
     client.loop_stop()
