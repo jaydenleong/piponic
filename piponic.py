@@ -51,6 +51,7 @@ import jwt
 import paho.mqtt.client as mqtt
 
 from gpiozero import LED
+from threading import Lock
 
 import src.relay as relay
 import src.adc as adc
@@ -104,7 +105,11 @@ class Device(object):
         self.low_battery =      self.adc_sensors.low_battery
         self.leak_threshold =   self.adc_sensors.leak_threshold
         
-        
+        # Default device configuration
+        # TODO(Jayden): refactor where default is
+        self.config_lock = Lock()
+        self.update_config(pins.DEFAULT_DEVICE_CONFIG)
+
         self.connected = False
         
         #test classes
@@ -185,7 +190,24 @@ class Device(object):
             else: 
                 return 0
     
+    def update_config(self, config):
+        """Updates the device configuration in a Thread-safe manner
 
+        Args:
+            config (dictionary): the new configuration
+        """
+        self.config_lock.acquire()
+        self.config = config
+        # TODO: remove
+        print(self.config)
+        self.config_lock.release()
+
+    def get_config(self):
+        """Gets device configuration in a Thread-safe manner"""
+        self.config_lock.acquire()
+        config = self.config
+        self.config_lock.release()
+        return config
 
     def exit(self): 
         GPIO.cleanup()
@@ -239,21 +261,35 @@ class Device(object):
         # the server sends a serialized JSON string.
         data = json.loads(payload)
 
+        # Configuration message recieved
         if "config" in message.topic:
             print('Config message recieved!')
             
-            # Do something if message meets your checks. 
-            if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
-                # If changing the state of the fan, print a message and
-                # update the internal state.
-                self.peristaltic_pump_on = data['peristaltic_pump_on']
-                if self.peristaltic_pump_on:
-                    print('peristaltic_pump turned on.')
-                    self.peristaltic_pump.on(pins.RELAY1)
-                else:
-                    print('peristaltic_pump turned off.')
-                    self.peristaltic_pump.off(pins.RELAY1)
+            # Respond to each configuration setting
+            # TODO(Jayden): improve lock
+            new_config = self.get_config()
+            for setting in data:
+                # Save configuration setting
+                if setting in self.config: 
+                    new_config[setting] = data[setting]
 
+                # Respond to certain configuration updates, like turning
+                # the pump on.
+                # TODO(Jayden): turn this into a command?
+                if setting == 'peristaltic_pump_on': 
+                    if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
+                        self.peristaltic_pump_on = data['peristaltic_pump_on']
+                        if self.peristaltic_pump_on:
+                            print('peristaltic_pump turned on.')
+                            self.peristaltic_pump.on(pins.RELAY1)
+                        else:
+                            print('peristaltic_pump turned off.')
+                            self.peristaltic_pump.off(pins.RELAY1)
+
+            # Save the updated device configuration
+            self.update_config(new_config)
+
+        # Command receieved
         elif "command" in message.topic:
             print('Command message recieved')
 
@@ -364,7 +400,6 @@ def main():
 
     # Publish sensor readings every 30 minutes.
     for _ in range(args.num_messages):
-        
         # Samples sensors every 1 minute and checks them 
         for i in range(update_period):
             # READ SENSOR DATA
