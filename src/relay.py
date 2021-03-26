@@ -37,7 +37,7 @@ def init(pin):
 
 # if your relay block is active LOW (you'll be pulling down the output), you'll need to init to high (pull-up default)
 def init_pullup(pin):
-    GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP) #confusing, but we turn on the pull-up resistor, so that the default value is high. 
+    GPIO.setup(pin, GPIO.OUT ) #confusing, but we turn on the pull-up resistor, so that the default value is high. 
     GPIO.output(pin, True)
 
 

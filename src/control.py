@@ -139,7 +139,7 @@ class pH_control(object):
 class wl_control(water_level.water_level):				
     def __init__(self):
         self.relay_pullup = 1
-        super().__init__(self) #init water_level sensor class
+        super().__init__() #init water_level sensor class
 
          
     def read_level(self):

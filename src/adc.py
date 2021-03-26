@@ -23,11 +23,11 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
-import src.control as control
+from src.control import pH_control
 
 
 
-class adc_sensors(control.ph_control):
+class adc_sensors(pH_control):
     def __init__(self):
         self.ads=0
         self.init_i2c()
@@ -35,7 +35,7 @@ class adc_sensors(control.ph_control):
         self.init_leak()
         # self.pH_sensor = 0
         # self.init_pH()
-        super().__init__(self)
+        super().__init__()
         self.battery_sensor=0
         self.init_battery()
         self.internal_leak=0
