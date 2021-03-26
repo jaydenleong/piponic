@@ -135,6 +135,14 @@ class Device(object):
         if not payload:
             return
 
+        if "config" in message.topic:
+            print('Config message recieved!')
+        elif "command" in message.topic:
+            print('Command message recieved')
+        else:
+            print('Unrecognized message recieved')
+
+
         # The config is passed in the payload of the message. In this example,
         # the server sends a serialized JSON string.
         #data = json.loads(payload)
