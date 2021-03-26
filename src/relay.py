@@ -30,13 +30,18 @@ import src.pins
 GPIO.setmode(GPIO.BCM) # GPIO Assign mode so that the numbers below are the GPIO assigned names
 
 
-
+#Default pull up configuration
 def init(pin):
     GPIO.setup(pin, GPIO.OUT)
     GPIO.output(pin,False) #set normally low
 
+# if your relay block is active LOW (you'll be pulling down the output), you'll need to init to high (pull-up default)
+def init_pullup(pin):
+    GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP) #confusing, but we turn on the pull-up resistor, so that the default value is high. 
+    GPIO.output(pin, True)
 
-#example function of turning on relay 1. Ti's almost too simple toi make a function for. We need to ahve a discussion about what this should look like...
+
+#example function of turning on relay 1.
 
 def on(pin):
     try:
@@ -49,6 +54,22 @@ def on(pin):
 def off(pin):
     try:
         GPIO.output(pin,False)
+
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        return -1
+
+def on_pu(pin):
+    try:
+        GPIO.output(pin,False)
+
+    except KeyboardInterrupt:
+        GPIO.cleanup()
+        return -1
+    
+def off_pu(pin):
+    try:
+        GPIO.output(pin,True)
 
     except KeyboardInterrupt:
         GPIO.cleanup()

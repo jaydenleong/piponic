@@ -20,6 +20,8 @@ Usage:
 
 import RPi.GPIO as GPIO
 import src.pins as pins
+import src.relay as relay
+
 
 
 class water_level(object):
@@ -27,6 +29,7 @@ class water_level(object):
         self.level = 0
         self.setup()
         self.read() # update level 
+        self.relay_pullup = 1
 
     def setup(self):
         try:
@@ -45,4 +48,15 @@ class water_level(object):
         except:
             GPIO.cleanup()        
             return -1
+
+    def water_level_control_loop(self):
+        if(self.relay_pullup):
+            relay.init_pullup(pins.Water_level_solenoid)
+        else:  
+            relay.init(pins.Water_level_solenoid)
+        while True:
+            
+            #print('valve opened')
+            time.sleep(6)
+		
 

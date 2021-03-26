@@ -23,17 +23,19 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+import src.control as control
 
 
 
-class adc_sensors(object):
+class adc_sensors(control.ph_control):
     def __init__(self):
         self.ads=0
         self.init_i2c()
         self.leak_sensor = 0
         self.init_leak()
-        self.pH_sensor = 0
-        self.init_pH()
+        # self.pH_sensor = 0
+        # self.init_pH()
+        super().__init__(self)
         self.battery_sensor=0
         self.init_battery()
         self.internal_leak=0
@@ -58,11 +60,11 @@ class adc_sensors(object):
     def init_leak(self):
         self.leak_sensor= AnalogIn(self.ads,ADS.P0)
          
-    def init_ph(self):
-        self.pH_sensor= AnalogIn(self.ads,ADS.P2)
+    # def init_ph(self):
+    #     self.pH_sensor= AnalogIn(self.ads,ADS.P2)
 
-    def init_pH(self):
-        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
+    # def init_pH(self):
+    #     self.pH_sensor= AnalogIn(self.ads,ADS.P1)
 
     def init_battery(self):
         self.battery_sensor= AnalogIn(self.ads,ADS.P2)       
@@ -76,21 +78,23 @@ class adc_sensors(object):
         return self.leak_sensor.voltage
 
     def read_pH(self):
-        pH_voltage = self.pH_sensor.voltage
-        pH = 7.7 +(pH_voltage-14.7/10)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
-        return pH
+         return super().read_pH()
+    #     pH_voltage = self.pH_sensor.voltage
+    #     pH = 7.7 +(pH_voltage-14.7/10)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
+    #     return pH
 
-    #test out an experimental quadratic formula
-    def read_pH_ex(self):
-        pH_voltage = self.pH_sensor.voltage
-        #pH_voltage = pH_voltage*14.7/10 #voltage divider
-        pH = -5.6732*pH_voltage**2+6.7868*pH_voltage+12.743
-        return pH
+    # #test out an experimental quadratic formula
+    # def read_pH_ex(self):
+    #     pH_voltage = self.pH_sensor.voltage
+    #     #pH_voltage = pH_voltage*14.7/10 #voltage divider
+    #     pH = -5.6732*pH_voltage**2+6.7868*pH_voltage+12.743
+    #     return pH
 
     def read_ph(self):
-        pH_voltage = self.pH_sensor.voltage
-        pH = 4.7 +(pH_voltage-1.65)*(-3.3)
-        return pH
+        return super().read_pH()
+    #     pH_voltage = self.pH_sensor.voltage
+    #     pH = 4.7 +(pH_voltage-1.65)*(-3.3)
+    #     return pH
 
     def read_battery(self):
         return self.battery_sensor.voltage
