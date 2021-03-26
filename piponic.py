@@ -224,6 +224,8 @@ class Device(object):
     def on_message(self, unused_client, unused_userdata, message):
         """Callback when the device receives a message on a subscription."""
         payload = message.payload.decode('utf-8')
+
+        # Print what message we recieved for debugging purposes
         print('Received message \'{}\' on topic \'{}\' with Qos {}'.format(
             payload, message.topic, str(message.qos)))
 
@@ -237,18 +239,30 @@ class Device(object):
         # the server sends a serialized JSON string.
         data = json.loads(payload)
 
-        # Do something if message meets your checks. 
-        if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
-            # If changing the state of the fan, print a message and
-            # update the internal state.
-            self.peristaltic_pump_on = data['peristaltic_pump_on']
-            if self.peristaltic_pump_on:
-                print('peristaltic_pump turned on.')
-                self.peristaltic_pump.on(pins.RELAY1)
-            else:
-                print('peristaltic_pump turned off.')
-                self.peristaltic_pump.off(pins.RELAY1)
+        if "config" in message.topic:
+            print('Config message recieved!')
+            
+            # Do something if message meets your checks. 
+            if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
+                # If changing the state of the fan, print a message and
+                # update the internal state.
+                self.peristaltic_pump_on = data['peristaltic_pump_on']
+                if self.peristaltic_pump_on:
+                    print('peristaltic_pump turned on.')
+                    self.peristaltic_pump.on(pins.RELAY1)
+                else:
+                    print('peristaltic_pump turned off.')
+                    self.peristaltic_pump.off(pins.RELAY1)
 
+        elif "command" in message.topic:
+            print('Command message recieved')
+
+            # pH calibration command
+            if( 'calibration_num' in data and 'ph' in data ):
+                print("pH calibration recieved")
+                print(data)
+        else:
+            print('Unrecognized message recieved')
 
 
 def parse_command_line_args():
@@ -336,9 +350,14 @@ def main():
     # This is the topic that the device will receive configuration updates on.
     mqtt_config_topic = '/devices/{}/config'.format(args.device_id)
 
+    # This is the topic that the device will recieve commands from
+    mqtt_command_topic = '/devices/{}/commands/#'.format(args.device_id)
+
     # Subscribe to the config topic.
     client.subscribe(mqtt_config_topic, qos=1)
 
+    # Subscribe to the commands topic
+    client.subscribe(mqtt_command_topic, qos=1)
 
     #number of samples to take before publishing 
     update_period = 30 #minutes
