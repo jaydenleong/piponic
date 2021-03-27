@@ -62,12 +62,12 @@ class pHController(Thread):
             pH = self.adc_sensors.read_pH()
             if (pH<=self.desired_pH):	# desired_pH should be set as the minimum value you want your pH to be at.
                 print('Peristalitic Pump started')
-                ## Turn on peristaltic pump for 2 seconds
-                #relay.on(pins.peristaltic_pump)
-                #time.sleep(2)
+                # Turn on peristaltic pump for 2 seconds
+                relay.on(pins.peristaltic_pump)
+                time.sleep(2)
 
-                #relay.off(pins.peristaltic_pump)
-                #time.sleep(2)
+                relay.off(pins.peristaltic_pump)
+                time.sleep(2)
 
 class waterLevelController(Thread): 
     """
@@ -80,29 +80,31 @@ class waterLevelController(Thread):
         super().__init__()
 
         self.relay_pullup = 1
+        
+        # Initialize water level sensor
+        self.water_level_sensor = water_level.water_level()
 
     def run(self):
         self.water_level_control_loop()
 
     def water_level_control_loop(self):
 
-        # TODO decouple control?
         if(self.relay_pullup):
             relay.init_pullup(pins.Water_level_solenoid)
         else:  
             relay.init(pins.Water_level_solenoid)
 
         while True:
-            print("Water level Loop!!!!!@")
             #TODO: double check Benny's water-level control algorithm recommendations
 
             #if the water level is low, turn on solenoid for 2 seconds
-            #if(self.read_level==0):
-            #    relay.on_pu(pins.Water_level_solenoid)
-            #    time.sleep(2)
+            if(self.water_level_sensor.read() == 0):
+                print("Start water level solenoid")
+                relay.on_pu(pins.Water_level_solenoid)
+                time.sleep(2)
 
-            #    relay.off_pu(pins.Water_level_solenoid)
-            #    time.sleep(2)
+                relay.off_pu(pins.Water_level_solenoid)
+                time.sleep(2)
             
             
             #print('valve opened')

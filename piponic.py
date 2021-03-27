@@ -104,34 +104,16 @@ class Device(object):
           'min_ph': 5,
           'max_temperature': 25,
           'min_temperature': 15,
-          'peristaltic_pump_on': False,
           'target_ph': 7,
           'update_interval_minutes': 30,
           'low_battery_volts' : 1,
           'leak_threshold_volts' : 0.25,
         };        
         self.update_config(DEFAULT_DEVICE_CONFIG)
-
         
+        # Is device connected
         self.connected = False
         
-        #test classes
-        self.fan_on = False
-        self.led = LED(17)
-        self.led.off()
-        
-        #Control Devices
-        self.relay=relay
-        self.peristaltic_pump_on = False
-        self.peristaltic_pump = self.relay
-        self.peristaltic_pump.init(pins.RELAY1)
-
-
-        self.water_solenoid_on = False
-        self.water_solenoid = self.relay
-        self.water_solenoid.init(pins.RELAY3) #TODO: change this to pins.RELAY2 for the model at Benny's 
-
-
     def update_sensor_data(self):
         """Read Sensor Data
         """
@@ -269,29 +251,17 @@ class Device(object):
 
         # Configuration message recieved
         if "config" in message.topic:
-            # Respond to each configuration setting
             new_config = self.get_config()
+
+            # Update configuration settings
             for setting in data:
-                # Save configuration setting
                 if setting in self.config: 
                     new_config[setting] = data[setting]
 
-                # Respond to certain configuration updates, like turning
-                # the pump on.
-                if setting == 'peristaltic_pump_on': 
-                    if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
-                        self.peristaltic_pump_on = data['peristaltic_pump_on']
-                        if self.peristaltic_pump_on:
-                            print('peristaltic_pump turned on.')
-                            self.peristaltic_pump.on(pins.RELAY1)
-                        else:
-                            print('peristaltic_pump turned off.')
-                            self.peristaltic_pump.off(pins.RELAY1)
-
             # Save the updated device configuration
             self.update_config(new_config)
-        elif "command" in message.topic:      # Command receieved
-
+        # Command receieved
+        elif "command" in message.topic:      
             # pH calibration command
             if( 'calibration_num' in data and 'ph' in data ):
                 if (data['calibration_num'] == 1):
