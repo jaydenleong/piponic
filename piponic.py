@@ -58,6 +58,7 @@ import src.adc as adc
 import src.temp as temp
 import src.pins as pins
 import src.water_level as WL
+import src.control as control
 
 
 def create_jwt(project_id, private_key_file, algorithm):
@@ -396,7 +397,16 @@ def main():
     # Subscribe to the commands topic
     client.subscribe(mqtt_command_topic, qos=1)
 
-    # Start application with loop
+
+    # Start controller to maintain pH in a healthy range
+    pH_control_thread = control.pHController()
+    pH_control_thread.start()
+
+    # Start controller to maintain water level
+    wl_control_thread = control.waterLevelController()
+    wl_control_thread.start()
+
+    # Start main application loop
     while True:
         # Get most recent device configuration
         device_config = device.get_config()
@@ -426,7 +436,12 @@ def main():
                 client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
 
             time.sleep(60) # Sleep for a minute
+    
+    # End thread execution
+    ph_control_thread.join()
+    wl_control_thread.join()
 
+    # Disconnect and clean up MQTT client
     client.disconnect()
     client.loop_stop()
     print("PiPonic application exited");

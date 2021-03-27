@@ -30,6 +30,80 @@ import src.relay as relay
 import src.water_level as water_level
 
 
+class pHController(Thread):
+    """
+    PH controlling class that executes in its own thread.
+    The purpose of this class is to maintain the pH of the
+    system within a healthy range
+    """
+    
+    def run(self):
+        self.pH_control_loop()
+
+   #Control loop where pH is checked and if it is too low, pH-increasing solution (KOH, or CaOH) is added
+    def pH_control_loop(self):
+        #print('pH control loop initialization start')
+        while True:
+            print("pH control Loop!!!!!@")
+            time.sleep(30)
+
+        #pH = self.read_pH()
+        ##initialize relay pins
+        #if(self.relay_pullup):
+        #    relay.init_pullup(pins.peristaltic_pump)
+        #else:  
+        #    relay.init(pins.peristaltic_pump)
+
+        ## start of loop    
+        #while True:
+        #    time.sleep(2)
+        #    print('pH control loop start')
+
+        #    pH = self.read_pH()
+        #    if (pH<=self.desired_pH):	# desired_pH should be set as the minimum value you want your pH to be at.
+        #        print('Peristalitic Pump started')
+        #        # Turn on peristaltic pump for 2 seconds
+        #        relay.on(pins.peristaltic_pump)
+        #        time.sleep(2)
+
+        #        relay.off(pins.peristaltic_pump)
+        #        time.sleep(2)
+
+class waterLevelController(Thread): 
+    """
+    Water level controlling class that executes in its own thread.
+    The purpose of this class is to maintain the water level of the
+    system within a healthy range
+    """
+
+    def run(self):
+        self.water_level_control_loop()
+
+    def water_level_control_loop(self):
+        while True:
+            print("Water level Loop!!!!!@")
+            time.sleep(5)
+
+        #if(self.relay_pullup):
+        #    relay.init_pullup(pins.Water_level_solenoid)
+        #else:  
+        #    relay.init(pins.Water_level_solenoid)
+        #while True:
+
+        #    #TODO: double check Benny's water-level control algorithm recommendations
+
+        #    #if the water level is low, turn on solenoid for 2 seconds
+        #    if(self.read_level==0):
+        #        relay.on_pu(pins.Water_level_solenoid)
+        #        time.sleep(2)
+
+        #        relay.off_pu(pins.Water_level_solenoid)
+        #        time.sleep(2)
+        #    
+        #    
+        #    #print('valve opened')
+        #    time.sleep(6)
+    
 
 class pH_control(object):
     def __init__(self):
@@ -165,14 +239,3 @@ class wl_control(water_level.water_level):
             
             #print('valve opened')
             time.sleep(6)
-		
-		
-#Create Class
-First = wl_control()
-FirstThread=Thread(target=First.water_level_control_loop)
-FirstThread.start()
-
-#Create Class
-Second = pH_control()
-SecondThread=Thread(target=Second.pH_control_loop)
-SecondThread.start()

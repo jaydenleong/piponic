@@ -38,24 +38,34 @@ class adc_sensors:
         (https://python-3-patterns-idioms-test.readthedocs.io/en/latest/Singleton.html)
         for more details.
     """
-    class __adc_sensors(pH_control):
+    class __adc_sensors():
         def __init__(self):
+            # Init ADC communication via I2C
             self.ads=0
             self.init_i2c()
-            self.leak_sensor = 0
-            self.init_leak()
-            # self.pH_sensor = 0
-            # self.init_pH()
-            super().__init__()
+                        
+            # Init battery sensor
             self.battery_sensor=0
             self.init_battery()
+
+            # Init leak sensors
             self.internal_leak=0
             self.init_internal_leak()
-    
+            self.leak_sensor = 0
+            self.init_leak()
+
+            # Init pH
+            self.pH_sensor = 0
+            self.init_pH()
+
+            # Default pH calibration values
+            self.pH_intercept = 7
+            self.pH_offset = 1.65
+            self.pH_slope = -3.3 
+     
         def init_i2c(self):
-            #define i2c object
+            # Define i2c object
             i2c = busio.I2C(board.SCL, board.SDA)
-            #create object
             self.ads = ADS.ADS1115(i2c) 
     
     ############# Initialize all the ADC pins ##################
@@ -63,47 +73,56 @@ class adc_sensors:
         def init_leak(self):
             self.leak_sensor= AnalogIn(self.ads,ADS.P0)
              
-        # def init_ph(self):
-        #     self.pH_sensor= AnalogIn(self.ads,ADS.P2)
-    
-        # def init_pH(self):
-        #     self.pH_sensor= AnalogIn(self.ads,ADS.P1)
-    
+        def init_pH(self):
+            self.pH_sensor= AnalogIn(self.ads,ADS.P1)
+            
         def init_battery(self):
             self.battery_sensor= AnalogIn(self.ads,ADS.P2)       
     
         def init_internal_leak(self):
             self.internal_leak= AnalogIn(self.ads,ADS.P3)     
     
-    
     ############### READ functions ############################
         def read_leak(self):
             return self.leak_sensor.voltage
-    
+
         def read_pH(self):
-             return super().read_pH()
-        #     pH_voltage = self.pH_sensor.voltage
-        #     pH = 7.7 +(pH_voltage-14.7/10)*(-3.3) #formula adjusted for use with a voltage divider to map the 5 V output to 3.3V for use with a 3.3V ADC
-        #     return pH
-    
-        # #test out an experimental quadratic formula
-        # def read_pH_ex(self):
-        #     pH_voltage = self.pH_sensor.voltage
-        #     #pH_voltage = pH_voltage*14.7/10 #voltage divider
-        #     pH = -5.6732*pH_voltage**2+6.7868*pH_voltage+12.743
-        #     return pH
-    
-        def read_ph(self):
-            return super().read_pH()
-        #     pH_voltage = self.pH_sensor.voltage
-        #     pH = 4.7 +(pH_voltage-1.65)*(-3.3)
-        #     return pH
-    
+            pH_voltage = self.pH_sensor.voltage
+            pH = self.pH_intercept +(pH_voltage-self.pH_offset)*(self.pH_slope)
+            return pH
+
         def read_battery(self):
             return self.battery_sensor.voltage
     
         def read_internal_leak(self):
             return self.internal_leak.voltage
+
+        # Calibration function
+        # Intended to assist with the calibration of the pH_probe at regular (eg. monthly) intervals
+        #
+        # REQUIRES USER ENGAGEMENT - THEY MUST CHANGE THE pH PROBE SOLUTION WHEN PROMPTED
+        # total process will take about 3 minutes.
+        #
+        #  inputs: self, pH of calibration solution 1 (eg 7), pH of calibration solution 2 (eg. 4)
+        # updates: self.pH_slope, self.pH_intercept
+        #use: ph_control.calibrate(self,7,4)
+        def calibrate1(self, calibration_pH_1):
+            #this function constructs a linear function of the form:
+            # y = m(x-offset)+b
+            # or
+            # pH = (slope)*(voltage-offset_voltage)+ pH_at_offset_voltage
+
+            # set the pH_offset to be the middle of the
+            self.pH_offset = self.pH_sensor.voltage # read the pH meter's voltage in the known solution 1
+
+        def calibrate2 (self, calibration_pH_1, calibration_pH_2):
+            v2 = self.pH_sensor.voltage # read the pH meter's voltage in the known solution 2
+
+            #calculate slope of pH-voltage curve (should be negative)
+            self.pH_slope = (calibration_pH_1-calibration_pH_2)/(self.pH_offset-v2)
+
+            #pH curve 'intercept' anchored around first datapoint
+            self.pH_intercept = calibration_pH_1
 
     # The current singleton instance of __adc_sensors
     instance = None
