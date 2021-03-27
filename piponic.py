@@ -269,8 +269,6 @@ class Device(object):
 
         # Configuration message recieved
         if "config" in message.topic:
-            print('Config message recieved from Google Cloud IoT')
-            
             # Respond to each configuration setting
             new_config = self.get_config()
             for setting in data:
@@ -293,12 +291,15 @@ class Device(object):
             # Save the updated device configuration
             self.update_config(new_config)
         elif "command" in message.topic:      # Command receieved
-            print('Command message recieved from Google Cloud IoT')
 
             # pH calibration command
             if( 'calibration_num' in data and 'ph' in data ):
-                print("pH calibration recieved")
-                print(data)
+                if (data['calibration_num'] == 1):
+                    self.adc_sensors.calibrate_ph_1(data['ph'])
+                elif (data['calibration_num'] == 2):
+                    self.adc_sensors.calibrate_ph_2(data['ph'])
+                else:
+                    print("[ERROR]: Invalid pH calibration number")
         else:
             print('Unrecognized message recieved')
 
@@ -396,7 +397,6 @@ def main():
 
     # Subscribe to the commands topic
     client.subscribe(mqtt_command_topic, qos=1)
-
 
     # Start controller to maintain pH in a healthy range
     pH_control_thread = control.pHController()

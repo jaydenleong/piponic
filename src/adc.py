@@ -23,7 +23,7 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
-
+from threading import Lock
 
 class adc_sensors:
     """Class which interfaces with the sensors attached to the ADC. Includes: 
@@ -39,6 +39,9 @@ class adc_sensors:
     """
     class __adc_sensors():
         def __init__(self):
+            # Only allow one thread to access sensors at a time
+            self.sensor_lock = Lock()
+
             # Init ADC communication via I2C
             self.ads=0
             self.init_i2c()
@@ -61,6 +64,7 @@ class adc_sensors:
             self.pH_intercept = 7
             self.pH_offset = 1.65
             self.pH_slope = -3.3 
+            self.calibration_pH_1 = None
      
         def init_i2c(self):
             # Define i2c object
@@ -83,48 +87,61 @@ class adc_sensors:
     
     ############### READ functions ############################
         def read_leak(self):
-            return self.leak_sensor.voltage
+            self.sensor_lock.acquire()
+            leak = self.leak_sensor.voltage
+            self.sensor_lock.release()
+            return leak 
 
         def read_pH(self):
+            self.sensor_lock.acquire()
             pH_voltage = self.pH_sensor.voltage
             pH = self.pH_intercept +(pH_voltage-self.pH_offset)*(self.pH_slope)
+            self.sensor_lock.release()
             return pH
 
         def read_battery(self):
-            return self.battery_sensor.voltage
+            self.sensor_lock.acquire()
+            battery_voltage = self.battery_sensor.voltage
+            self.sensor_lock.release()
+            return battery_voltage
     
         def read_internal_leak(self):
-            return self.internal_leak.voltage
+            self.sensor_lock.acquire()
+            internal_leak = self.internal_leak.voltage
+            self.sensor_lock.release()
+            return internal_leak
 
-        # Calibration function
-        # Intended to assist with the calibration of the pH_probe at regular (eg. monthly) intervals
-        #
-        # REQUIRES USER ENGAGEMENT - THEY MUST CHANGE THE pH PROBE SOLUTION WHEN PROMPTED
-        # total process will take about 3 minutes.
-        #
-        #  inputs: self, pH of calibration solution 1 (eg 7), pH of calibration solution 2 (eg. 4)
-        # updates: self.pH_slope, self.pH_intercept
-        #use: ph_control.calibrate(self,7,4)
-        def calibrate1(self, calibration_pH_1):
+        def calibrate_ph_1(self, calibration_pH_1):
+            
+            # set the pH_offset to be the middle of the
+            self.sensor_lock.acquire()
+            self.pH_offset = self.pH_sensor.voltage # read the pH meter's voltage in the known solution 1
+            self.calibration_pH_1 = calibration_pH_1
+            self.sensor_lock.release()
+
+        def calibrate_ph_2(self, calibration_pH_2):
             #this function constructs a linear function of the form:
             # y = m(x-offset)+b
             # or
             # pH = (slope)*(voltage-offset_voltage)+ pH_at_offset_voltage
 
-            # set the pH_offset to be the middle of the
-            self.pH_offset = self.pH_sensor.voltage # read the pH meter's voltage in the known solution 1
+            self.sensor_lock.acquire()
 
-        def calibrate2 (self, calibration_pH_1, calibration_pH_2):
             v2 = self.pH_sensor.voltage # read the pH meter's voltage in the known solution 2
 
             #calculate slope of pH-voltage curve (should be negative)
-            self.pH_slope = (calibration_pH_1-calibration_pH_2)/(self.pH_offset-v2)
+            self.pH_slope = (self.calibration_pH_1-calibration_pH_2)/(self.pH_offset-v2)
 
             #pH curve 'intercept' anchored around first datapoint
-            self.pH_intercept = calibration_pH_1
+            self.pH_intercept = self.calibration_pH_1
+
+            self.sensor_lock.release()
 
     # The current singleton instance of __adc_sensors
     instance = None
+
+    # To ensure there is only one instance created across multiple threads
+    instance_lock = Lock()
 
     def __init__(self):
         """
@@ -132,8 +149,10 @@ class adc_sensors:
         This ensures that there is only one object interfacing
         the adc in the application
         """
+        adc_sensors.instance_lock.acquire()
         if not adc_sensors.instance:
             adc_sensors.instance = adc_sensors.__adc_sensors()
+        adc_sensors.instance_lock.release()
 
     def __getattr__(self, name):
         """
