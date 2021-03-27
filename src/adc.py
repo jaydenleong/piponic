@@ -23,7 +23,6 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
-from src.control import pH_control
 
 
 class adc_sensors:
