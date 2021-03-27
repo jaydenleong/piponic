@@ -82,7 +82,7 @@ def error_str(rc):
 class Device(object):
     """Represents the state of a single device. Including the variables in the system."""
     def __init__(self):
-        #sensors
+        # Initialise sensor readings
         self.temperature = 0
         self.temp = temp
         self.pH = 7
@@ -93,23 +93,25 @@ class Device(object):
         self.battery_voltage = 0
         self.internal_leak = 0
         
-        # sensor warning levels 
-        self.min_temp = 10 #degrees C
-        self.max_temp = 25 #degrees C
-        self.delta_temp = 5 #degrees in 30 min
+        # Since the configuration is updated from multiple threads
+        # create a mutex to handle synchronisation
+        self.config_lock = Lock() 
 
-            #default values coded in adc.py
-        self.min_pH =           self.adc_sensors.low_pH
-        self.max_pH =           self.adc_sensors.high_pH
-        self.delta_pH =         self.adc_sensors.delta_pH #pH/min
-        self.low_battery =      self.adc_sensors.low_battery
-        self.leak_threshold =   self.adc_sensors.leak_threshold
+        # Initialise device configuration to default
+        DEFAULT_DEVICE_CONFIG = {
+          'max_ph': 10,
+          'min_ph': 5,
+          'max_temperature': 25,
+          'min_temperature': 15,
+          'peristaltic_pump_on': False,
+          'target_ph': 7,
+          'update_interval_minutes': 30,
+          'low_battery_volts' : 1,
+          'leak_threshold_volts' : 0.25,
+        };        
+        self.update_config(DEFAULT_DEVICE_CONFIG)
+
         
-        # Default device configuration
-        # TODO(Jayden): refactor where default is
-        self.config_lock = Lock()
-        self.update_config(pins.DEFAULT_DEVICE_CONFIG)
-
         self.connected = False
         
         #test classes
@@ -151,36 +153,6 @@ class Device(object):
 
         print('All sensors successfully read!')   
 
-
-    def check_temp_data(self):
-        """Check temperature data for extraneous values or rapid changes 
-        """
-        #temperature low or high
-        if(self.temperature<self.min_temp or self.temperature>self.max_temp):
-            return 1
-        #temperature good
-        else:
-            return 0
-
-    def check_pH_data(self):
-        """Check pH data for extraneous values or rapid changes 
-        """
-        #pH low or high
-        if(self.pH<self.min_pH or self.pH>self.max_pH):
-            return 1
-        #pH good
-        else:
-            return 0
-
-    def check_leak_data(self):
-        """Check leak data for extraneous values or rapid changes 
-        """
-        #leak high?
-        if(self.leak>self.leak_threshold or self.internal_leak>self.leak_threshold):
-            return 1
-        else: 
-            return 0
-
     def error_detected(self): 
         """Check if there are any errors with any of the sensor readings
         
@@ -214,15 +186,6 @@ class Device(object):
             error_detected = True
 
         return error_detected
-    
-    def check_battery_data(self):
-            """Check battery data for extraneous values or rapid changes 
-            """
-            #battery low?
-            if(self.battery_voltage<self.low_battery):
-                return 1
-            else: 
-                return 0
 
     def get_sensor_data(self):
         """Gets sensor data, formatted as JSON"""
@@ -305,10 +268,9 @@ class Device(object):
 
         # Configuration message recieved
         if "config" in message.topic:
-            print('Config message recieved!')
+            print('Config message recieved from Google Cloud IoT')
             
             # Respond to each configuration setting
-            # TODO(Jayden): improve lock
             new_config = self.get_config()
             for setting in data:
                 # Save configuration setting
@@ -317,7 +279,6 @@ class Device(object):
 
                 # Respond to certain configuration updates, like turning
                 # the pump on.
-                # TODO(Jayden): turn this into a command?
                 if setting == 'peristaltic_pump_on': 
                     if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
                         self.peristaltic_pump_on = data['peristaltic_pump_on']
@@ -330,10 +291,8 @@ class Device(object):
 
             # Save the updated device configuration
             self.update_config(new_config)
-
-        # Command receieved
-        elif "command" in message.topic:
-            print('Command message recieved')
+        elif "command" in message.topic:      # Command receieved
+            print('Command message recieved from Google Cloud IoT')
 
             # pH calibration command
             if( 'calibration_num' in data and 'ph' in data ):

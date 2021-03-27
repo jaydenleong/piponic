@@ -26,7 +26,7 @@ from adafruit_ads1x15.analog_in import AnalogIn
 from src.control import pH_control
 
 
-
+# 
 class adc_sensors(pH_control):
     def __init__(self):
         self.ads=0
@@ -40,14 +40,6 @@ class adc_sensors(pH_control):
         self.init_battery()
         self.internal_leak=0
         self.init_internal_leak()
-
-        # warning thresholds
-        self.low_battery =      1 #V
-        self.leak_threshold =   0.25 #V 
-        self.low_pH =           4.5  #pH
-        self.high_pH =          8    #pH
-        self.delta_pH =         1.0  #pH/10min
-
 
     def init_i2c(self):
         #define i2c object

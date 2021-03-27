@@ -14,20 +14,6 @@ I2C_SCL = 3
 TEMP = 4
 WATER_LEVEL = 17
 
-# TODO(JAYDEN): move this to better location
-DEFAULT_DEVICE_CONFIG = {
-  'max_ph': 10,
-  'min_ph': 5,
-  'max_temperature': 25,
-  'min_temperature': 15,
-  'peristaltic_pump_on': False,
-  'target_ph': 7,
-  'update_interval_minutes': 30,
-  'low_battery_volts' : 1,
-  'leak_threshold_volts' : 0.25,
-};
-
-
 #ADC0 PINS
 #P0 Outer Leak detector
 #P1 pH sensor
