@@ -149,8 +149,8 @@ class Device(object):
             print('Water Level not read correctly')
             self.exit()
 
-
         print('All sensors successfully read!')   
+
 
     def check_temp_data(self):
         """Check temperature data for extraneous values or rapid changes 
@@ -180,6 +180,40 @@ class Device(object):
             return 1
         else: 
             return 0
+
+    def error_detected(self): 
+        """Check if there are any errors with any of the sensor readings
+        
+        Returns:
+            (bool) : whether the device has an error or not
+        """
+        # By default there are no errors detected
+        error_detected = False
+
+        # Get configuration for thresholds
+        config = self.get_config()
+        
+        # Check leak sensors 
+        if (self.leak > config['leak_threshold_volts'] or self.internal_leak > config['leak_threshold_volts']):
+            print("[WARN] Leak detected")
+            error_detected = True
+
+        # Check pH value
+        if (self.pH < config['min_ph'] or self.pH > config['max_ph']):
+            print("[WARN] pH outside of healthy range")
+            error_detected = True
+
+        # Check temperature
+        if (self.temperature < config['min_temperature'] or self.temperature > config['max_temperature'] ):
+            print("[WARN] Temperature outside of healthy range") 
+            error_detected = True
+        
+        # Check battery level
+        if(self.battery_voltage < config['low_battery_volts'] ):
+            print("[WARN] Low battery voltage detected")
+            error_detected = True
+
+        return error_detected
     
     def check_battery_data(self):
             """Check battery data for extraneous values or rapid changes 
@@ -189,7 +223,16 @@ class Device(object):
                 return 1
             else: 
                 return 0
-    
+
+    def get_sensor_data(self):
+        """Gets sensor data, formatted as JSON"""
+        return json.dumps({'temperature': self.temperature,
+                            'pH': self.pH,
+                            'leak': self.leak,
+                            'water_level': self.water_level, 
+                            'battery_voltage': self.battery_voltage,
+                            'internal_leak': self.internal_leak})
+
     def update_config(self, config):
         """Updates the device configuration in a Thread-safe manner
 
@@ -198,8 +241,7 @@ class Device(object):
         """
         self.config_lock.acquire()
         self.config = config
-        # TODO: remove
-        print(self.config)
+        print("Configuration updated to: ", self.config)
         self.config_lock.release()
 
     def get_config(self):
@@ -395,46 +437,40 @@ def main():
     # Subscribe to the commands topic
     client.subscribe(mqtt_command_topic, qos=1)
 
-    #number of samples to take before publishing 
-    update_period = 30 #minutes
+    # Start application with loop
+    while True:
+        # Get most recent device configuration
+        device_config = device.get_config()
 
-    # Publish sensor readings every 30 minutes.
-    for _ in range(args.num_messages):
-        # Samples sensors every 1 minute and checks them 
-        for i in range(update_period):
-            # READ SENSOR DATA
+        # Update sensor measurements 
+        device.update_sensor_data()
+
+        # Fetch sensor data
+        sensor_data = device.get_sensor_data()
+
+        # Publish sensor readings
+        print('Publishing sensor data: ', sensor_data)
+        client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
+
+        # Loop that checks sensor readings every minute
+        # If there are errors detected, we post an update
+        # Otherwise, we just post updates at 'update_interval_minutes'
+        for i in range(device_config['update_interval_minutes']):
             device.update_sensor_data()
 
-            #check for warnings 
-            if( device.check_leak_data() 
-                or device.check_pH_data() 
-                or device.check_temp_data()):
-                break
-            #
-            if(device.check_battery_data()):
-                print('Low Battery Voltage: ',device.battery_voltage)
-                # go into a low power mode
+            if device.error_detected():             
+                print('[WARN] Unhealthy sensor readings detected. Publishing update early.')
 
-                
-            time.sleep(60) #sleep for 1 min
+                # Publish sensor readings
+                sensor_data = device.get_sensor_data()
+                print('Publishing sensor data: ', sensor_data)
+                client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
 
-    
-        # Report the sensor data to the server by serializing it
-        # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature,
-                            'pH': device.pH,
-                            'leak': device.leak,
-                            'water_level': device.water_level, 
-                            'battery_voltage': device.battery_voltage,
-                            'internal_leak': device.internal_leak})
-        print('Publishing payload', payload)
-        client.publish(mqtt_telemetry_topic, payload, qos=1)
-        time.sleep(60) 
-     
+            time.sleep(60) # Sleep for a minute
+
     client.disconnect()
     client.loop_stop()
-    print('Finished loop successfully. Goodbye!')
-
+    print("PiPonic application exited");
 
 if __name__ == '__main__':
     main()

@@ -24,7 +24,7 @@ DEFAULT_DEVICE_CONFIG = {
   'target_ph': 7,
   'update_interval_minutes': 30,
   'low_battery_volts' : 1,
-  'leak_threshold' : 0.25,
+  'leak_threshold_volts' : 0.25,
 };
 
 
