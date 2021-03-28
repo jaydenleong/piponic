@@ -19,6 +19,7 @@ import src.pins as pins
 import src.relay as relay
 import src.water_level as water_level
 import src.adc as adc
+import src.device as dev
 
 class pHController(Thread):
     """
@@ -38,8 +39,8 @@ class pHController(Thread):
         self.relay_pullup = 1 
         
         # The pH to maintain the system at
-        # TODO: update this value
-        self.desired_pH = 7
+        self.device = dev.Device()
+        self.desired_pH = self.device.get_config()['target_ph']
     
     def run(self):
         self.pH_control_loop()
@@ -56,10 +57,15 @@ class pHController(Thread):
 
         # start of loop    
         while True:
-            time.sleep(2)
-            print('pH control loop start')
+            time.sleep(30)
 
+            # Get current pH value
             pH = self.adc_sensors.read_pH()
+
+            # Update desired pH based on device configuration
+            self.desired_pH = self.device.get_config()['target_ph']
+            print("Desired pH: ", self.desired_pH)
+
             if (pH<=self.desired_pH):	# desired_pH should be set as the minimum value you want your pH to be at.
                 print('Peristalitic Pump started')
                 # Turn on peristaltic pump for 2 seconds
