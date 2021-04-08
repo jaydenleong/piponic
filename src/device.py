@@ -94,8 +94,8 @@ class Device(object):
                 self.leak =             self.adc_sensors.read_leak()
                 self.battery_voltage =  self.adc_sensors.read_battery()
                 self.internal_leak =    self.adc_sensors.read_internal_leak()
-
-            except:
+            except Exception as e:
+                print(e)
                 print('Error ADC or I2C Error')
                 self.exit()
 

@@ -180,37 +180,45 @@ def main():
 
     # Start main application loop
     while True:
-        # Get most recent device configuration
-        device_config = device.get_config()
+        try:
+            # Get most recent device configuration
+            device_config = device.get_config()
 
-        # Update sensor measurements 
-        device.update_sensor_data()
-
-        # Fetch sensor data
-        sensor_data = device.get_sensor_data()
-
-        # Publish sensor readings
-        print('Publishing sensor data: ', sensor_data)
-        client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
-
-        # Loop that checks sensor readings every minute
-        # If there are errors detected, we post an update
-        # Otherwise, we just post updates at 'update_interval_minutes'
-        for i in range(device_config['update_interval_minutes']):
+            # Update sensor measurements 
             device.update_sensor_data()
 
-            if device.error_detected():             
-                print('[WARN] Unhealthy sensor readings detected. Publishing update early.')
+            # Fetch sensor data
+            sensor_data = device.get_sensor_data()
 
-                # Publish sensor readings
-                sensor_data = device.get_sensor_data()
-                print('Publishing sensor data: ', sensor_data)
-                client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
+            # Publish sensor readings
+            print('Publishing sensor data: ', sensor_data)
+            client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
 
-            time.sleep(60) # Sleep for a minute
+            # Loop that checks sensor readings every minute
+            # If there are errors detected, we post an update
+            # Otherwise, we just post updates at 'update_interval_minutes'
+            for i in range(device_config['update_interval_minutes']):
+                device.update_sensor_data()
+
+                if device.error_detected():             
+                    print('[WARN] Unhealthy sensor readings detected. Publishing update early.')
+
+                    # Publish sensor readings
+                    sensor_data = device.get_sensor_data()
+                    print('Publishing sensor data: ', sensor_data)
+                    client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
+
+                time.sleep(60) # Sleep for a minute
+        except:
+            break # Exit main loop if there is an error so we can clean up
+
+    print("Killed main sensor loop")
     
-    # Wait for end of thread execution
-    ph_control_thread.join()
+    # Kill control threads if main loop exits    
+    print("Killing control loops... May take up to 30 seconds...") 
+    pH_control_thread.kill()
+    wl_control_thread.kill()
+    pH_control_thread.join()
     wl_control_thread.join()
 
     # Disconnect and clean up MQTT client

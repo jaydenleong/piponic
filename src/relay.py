@@ -23,8 +23,7 @@ import time
 import src.pins
 
 
-# set all the pins to output pins
-
+# Set all the pins to output pins
 GPIO.setmode(GPIO.BCM) # GPIO Assign mode so that the numbers below are the GPIO assigned names
 
 
