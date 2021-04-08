@@ -61,6 +61,7 @@ import src.pins as pins
 import src.water_level as WL
 import src.control as control
 
+CONTROL_LOOPS_ENABLED=False
 
 def create_jwt(project_id, private_key_file, algorithm):
     """Create a JWT (https://jwt.io) to establish an MQTT connection."""
@@ -170,13 +171,14 @@ def main():
     # Subscribe to the commands topic
     client.subscribe(mqtt_command_topic, qos=1)
 
-    # Start controller to maintain pH in a healthy range
-    pH_control_thread = control.pHController()
-    pH_control_thread.start()
+    if CONTROL_LOOPS_ENABLED:
+        # Start controller to maintain pH in a healthy range
+        pH_control_thread = control.pHController()
+        pH_control_thread.start()
 
-    # Start controller to maintain water level
-    wl_control_thread = control.waterLevelController()
-    wl_control_thread.start()
+        # Start controller to maintain water level
+        wl_control_thread = control.waterLevelController()
+        wl_control_thread.start()
 
     # Start main application loop
     while True:
@@ -216,10 +218,11 @@ def main():
     
     # Kill control threads if main loop exits    
     print("Killing control loops... May take up to 30 seconds...") 
-    pH_control_thread.kill()
-    wl_control_thread.kill()
-    pH_control_thread.join()
-    wl_control_thread.join()
+    if CONTROL_LOOPS_ENABLED:
+        pH_control_thread.kill()
+        wl_control_thread.kill()
+        pH_control_thread.join()
+        wl_control_thread.join()
 
     # Disconnect and clean up MQTT client
     client.disconnect()
