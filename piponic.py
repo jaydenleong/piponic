@@ -61,7 +61,7 @@ import src.pins as pins
 import src.water_level as WL
 import src.control as control
 
-CONTROL_LOOPS_ENABLED=False
+CONTROL_LOOPS_ENABLED=False #disable multithreaded control loops 
 
 def create_jwt(project_id, private_key_file, algorithm):
     """Create a JWT (https://jwt.io) to establish an MQTT connection."""
@@ -180,6 +180,10 @@ def main():
         wl_control_thread = control.waterLevelController()
         wl_control_thread.start()
 
+    #temporary control fix - initialize the peristaltic pump here
+    relay.init_pullup(pins.peristaltic_pump)
+    min_pH_accuracy = 0.5
+
     # Start main application loop
     while True:
         try:
@@ -209,6 +213,16 @@ def main():
                     sensor_data = device.get_sensor_data()
                     print('Publishing sensor data: ', sensor_data)
                     client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
+                
+                #control moved to here because multi-threading with control throws tricky error
+                if(abs(device.pH-float(device_config['target_ph']))>min_pH_accuracy):
+                        #turn on peristaltic pump
+                        relay.on_pu(pins.peristaltic_pump)
+                        time.sleep(2)
+                        relay.off_pu(pins.peristaltic_pump)
+
+                 
+
 
                 time.sleep(60) # Sleep for a minute
         except:
