@@ -24,6 +24,7 @@ import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 from threading import Lock
+import re
 
 class adc_sensors:
     """Class which interfaces with the sensors attached to the ADC. Includes: 
@@ -61,9 +62,31 @@ class adc_sensors:
             self.init_pH()
 
             # Default pH calibration values
-            self.pH_intercept = 7
-            self.pH_offset = 1.65
-            self.pH_slope = -3.3 
+            with open(r"src/pH_calibration_values.txt","r") as calibration_file:
+                    for line in calibration_file:
+                            #ignore text after comments
+                            line = line.partition('#')[0] 
+                            line = line.rstrip()
+                            
+                            if("pH_intercept" in line):
+                                temp = re.findall(r"[-+]?\d*\.\d+|\d+", line) # find floats in line
+                                temp = list(map(float,temp))
+                                self.pH_intercept = temp[0]
+                                print('pH intercept: ',self.pH_intercept)
+
+                            if("pH_offset" in line):
+                                temp = re.findall(r"[-+]?\d*\.\d+|\d+",line) #find floats in line
+                                temp = list(map(float,temp))
+                                self.pH_offset = temp[0]
+                                print('pH offset: ',self.pH_offset)
+
+                            if("pH_slope" in line):
+                                temp = re.findall(r"[-+]?\d*\.\d+|\d+", line) #find floating number
+                                temp = list(map(float,temp))
+                                self.pH_slope = temp[0]
+                                print('pH slope: ', self.pH_slope)
+
+           
             self.calibration_pH_1 = None
      
         def init_i2c(self):
@@ -119,6 +142,22 @@ class adc_sensors:
             self.calibration_pH_1 = calibration_pH_1
             self.sensor_lock.release()
 
+            #write the new pH offset to the src/pH_calibration_values.txt file
+            with open(r"src/pH_calibration_values.txt","r+") as calibration_file:
+                all_lines = calibration_file.readlines()
+                calibration_file.seek(0)
+
+                for line in all_lines:
+                    if('pH_offset' not in line):
+                            #match = re.search(r"[-+]?\d*\.\d+|\d+",line) 
+                            #rewrite whole line
+                            calibration_file.write(line)
+
+                new_line = "pH_offset "+str(self.pH_offset)+"\n"
+                calibration_file.write(new_line) 
+                calibration_file.truncate()
+                
+
         def calibrate_ph_2(self, calibration_pH_2):
             #this function constructs a linear function of the form:
             # y = m(x-offset)+b
@@ -137,6 +176,20 @@ class adc_sensors:
 
             self.sensor_lock.release()
 
+            with open(r"src/pH_calibration_values.txt","r+") as calibration_file:
+                all_lines = calibration_file.readlines()
+                calibration_file.seek(0)
+
+                for line in all_lines:
+                    if('pH_intercept' or 'pH_slope' not in line):
+                            #rewrite old line
+                            calibration_file.write(line)
+
+                new_line = "pH_slope "+str(self.pH_slope)+"\n"
+                calibration_file.write(new_line) 
+                new_line = "pH_intercept "+str(self.pH_intercept)+"\n"
+                calibration_file.write(new_line) 
+                calibration_file.truncate()
     # The current singleton instance of __adc_sensors
     instance = None
 

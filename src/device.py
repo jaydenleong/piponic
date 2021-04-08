@@ -38,7 +38,7 @@ import time
 
 from gpiozero import LED
 from threading import Lock
-
+import RPi.GPIO as GPIO
 import src.relay as relay
 import src.adc as adc
 import src.temp as temp

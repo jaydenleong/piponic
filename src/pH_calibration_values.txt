@@ -1,0 +1,4 @@
+#This file is the storage location for the saved pH calibration values from the last calibration
+pH_offset 0.7461477706228828
+pH_slope -3.3
+pH_intercept 7
