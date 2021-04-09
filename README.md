@@ -10,12 +10,6 @@ Our work contributes a low-cost, open-source hardware design, and IoT developmen
 
 Our system can also operate on battery power in the event of a power-outage, a critical failure in aquaponic systems. This feature allows growers to be notified and to begin to take corrective action within the minute of the outage.
 
-## System Overview
-
-As you can see, the sensing and control system is attached to the aquaponic/hydroponic installation. Then, users can monitor an control their system remotely.
-
-<img src="docs/systemOverview.png" alt="drawing" width=""/>
-
 ## This Repository
 
 This repository is for the Raspberry Pi code. It manages the sensing and control system attached to a aquaponic/hydroponic installation. Currently, this includes the following sensors:
@@ -34,6 +28,8 @@ Additionally, this code automatically regulates the following:
 Raspberry Pis also connect to Google Cloud IoT to communicate with our mobile application.
 
 ## Related Repositories:
+
+<img src="docs/systemOverview.png" alt="drawing" width="600"/>
 
 - [piponic_cloud](https://github.com/jaydenleong/piponic_cloud): Google Firebase functions that connect Raspberry Pis and the mobile application.
 - [piponic_app](https://github.com/jaydenleong/piponic_app): The mobile application for users to remotely monitor and control their aqua/hydroponic installation. Implemented using Google's Flutter.
