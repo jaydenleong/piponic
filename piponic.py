@@ -241,18 +241,30 @@ class Device(object):
 
         if "config" in message.topic:
             print('Config message recieved!')
-            
-            # Do something if message meets your checks. 
-            if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
-                # If changing the state of the fan, print a message and
-                # update the internal state.
-                self.peristaltic_pump_on = data['peristaltic_pump_on']
-                if self.peristaltic_pump_on:
-                    print('peristaltic_pump turned on.')
-                    self.peristaltic_pump.on(pins.RELAY1)
-                else:
-                    print('peristaltic_pump turned off.')
-                    self.peristaltic_pump.off(pins.RELAY1)
+
+            for config in data:
+                if config == 'peristaltic_pump_on': 
+                    if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
+                    # If changing the state of the fan, print a message and
+                    # update the internal state.
+                    self.peristaltic_pump_on = data['peristaltic_pump_on']
+                    if self.peristaltic_pump_on:
+                        print('peristaltic_pump turned on.')
+                        self.peristaltic_pump.on(pins.RELAY1)
+                    else:
+                        print('peristaltic_pump turned off.')
+                        self.peristaltic_pump.off(pins.RELAY1)
+                elif config == 'max_ph':
+
+                elif config == 'max_temperature':
+
+                elif config == 'min_ph':
+
+                elif config == 'min_temperature':
+
+                elif config == 'target_ph':
+
+                elif config == 'update_interval_minutes':
 
         elif "command" in message.topic:
             print('Command message recieved')
