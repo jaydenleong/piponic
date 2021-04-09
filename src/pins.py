@@ -1,6 +1,6 @@
 #This file stores the GPIO pin values as constants for human and machine reference
 RELAY1 = 26
-Peristaltic_pump = RELAY1
+peristaltic_pump = RELAY1
 
 RELAY2 = 19
 Water_level_solenoid = RELAY2

@@ -51,13 +51,17 @@ import jwt
 import paho.mqtt.client as mqtt
 
 from gpiozero import LED
+from threading import Lock
 
+import src.device as dev 
 import src.relay as relay
 import src.adc as adc
 import src.temp as temp
 import src.pins as pins
 import src.water_level as WL
+import src.control as control
 
+CONTROL_LOOPS_ENABLED=False #disable multithreaded control loops 
 
 def create_jwt(project_id, private_key_file, algorithm):
     """Create a JWT (https://jwt.io) to establish an MQTT connection."""
@@ -71,211 +75,6 @@ def create_jwt(project_id, private_key_file, algorithm):
     print('Creating JWT using {} from private key file {}'.format(
         algorithm, private_key_file))
     return jwt.encode(token, private_key, algorithm=algorithm)
-
-
-def error_str(rc):
-    """Convert a Paho error to a human readable string."""
-    return '{}: {}'.format(rc, mqtt.error_string(rc))
-
-
-class Device(object):
-    """Represents the state of a single device. Including the variables in the system."""
-    def __init__(self):
-        #sensors
-        self.temperature = 0
-        self.temp = temp
-        self.pH = 7
-        self.leak = 0
-        self.adc_sensors = adc.adc_sensors()
-        self.water_level_sensor = WL.water_level()
-        self.water_level = 0
-        self.battery_voltage = 0
-        self.internal_leak = 0
-        
-        # sensor warning levels 
-        self.min_temp = 10 #degrees C
-        self.max_temp = 25 #degrees C
-        self.delta_temp = 5 #degrees in 30 min
-
-            #default values coded in adc.py
-        self.min_pH =           self.adc_sensors.low_pH
-        self.max_pH =           self.adc_sensors.high_pH
-        self.delta_pH =         self.adc_sensors.delta_pH #pH/min
-        self.low_battery =      self.adc_sensors.low_battery
-        self.leak_threshold =   self.adc_sensors.leak_threshold
-        
-        
-        self.connected = False
-        
-        #test classes
-        self.fan_on = False
-        self.led = LED(17)
-        self.led.off()
-        
-        #Control Devices
-        self.relay=relay
-        self.peristaltic_pump_on = False
-        self.peristaltic_pump = self.relay
-        self.peristaltic_pump.init(pins.RELAY1)
-
-
-        self.water_solenoid_on = False
-        self.water_solenoid = self.relay
-        self.water_solenoid.init(pins.RELAY3) #TODO: change this to pins.RELAY2 for the model at Benny's 
-
-
-    def update_sensor_data(self):
-        """Read Sensor Data
-        """
-        self.temperature = temp.read()
-        try:
-            self.pH =               self.adc_sensors.read_pH()
-            self.leak =             self.adc_sensors.read_leak()
-            self.battery_voltage =  self.adc_sensors.read_battery()
-            self.internal_leak =    self.adc_sensors.read_internal_leak()
-
-        except:
-            print('Error ADC or I2C Error')
-            self.exit()
-
-        try:
-            self.water_level =      self.water_level_sensor.read()
-        except:
-            print('Water Level not read correctly')
-            self.exit()
-
-
-        print('All sensors successfully read!')   
-
-    def check_temp_data(self):
-        """Check temperature data for extraneous values or rapid changes 
-        """
-        #temperature low or high
-        if(self.temperature<self.min_temp or self.temperature>self.max_temp):
-            return 1
-        #temperature good
-        else:
-            return 0
-
-    def check_pH_data(self):
-        """Check pH data for extraneous values or rapid changes 
-        """
-        #pH low or high
-        if(self.pH<self.min_pH or self.pH>self.max_pH):
-            return 1
-        #pH good
-        else:
-            return 0
-
-    def check_leak_data(self):
-        """Check leak data for extraneous values or rapid changes 
-        """
-        #leak high?
-        if(self.leak>self.leak_threshold or self.internal_leak>self.leak_threshold):
-            return 1
-        else: 
-            return 0
-    
-    def check_battery_data(self):
-            """Check battery data for extraneous values or rapid changes 
-            """
-            #battery low?
-            if(self.battery_voltage<self.low_battery):
-                return 1
-            else: 
-                return 0
-    
-
-
-    def exit(self): 
-        GPIO.cleanup()
-
-    def wait_for_connection(self, timeout):
-        """Wait for the device to become connected."""
-        total_time = 0
-        while not self.connected and total_time < timeout:
-            time.sleep(1)
-            total_time += 1
-
-        if not self.connected:
-            raise RuntimeError('Could not connect to MQTT bridge.')
-
-    def on_connect(self, unused_client, unused_userdata, unused_flags, rc):
-        """Callback for when a device connects."""
-        print('Connection Result:', error_str(rc))
-        self.connected = True
-
-    def on_disconnect(self, unused_client, unused_userdata, rc):
-        """Callback for when a device disconnects."""
-        print('Disconnected:', error_str(rc))
-        self.connected = False
-
-    def on_publish(self, unused_client, unused_userdata, unused_mid):
-        """Callback when the device receives a PUBACK from the MQTT bridge."""
-        print('Published message acked.')
-
-    def on_subscribe(self, unused_client, unused_userdata, unused_mid,
-                     granted_qos):
-        """Callback when the device receives a SUBACK from the MQTT bridge."""
-        print('Subscribed: ', granted_qos)
-        if granted_qos[0] == 128:
-            print('Subscription failed.')
-
-    def on_message(self, unused_client, unused_userdata, message):
-        """Callback when the device receives a message on a subscription."""
-        payload = message.payload.decode('utf-8')
-
-        # Print what message we recieved for debugging purposes
-        print('Received message \'{}\' on topic \'{}\' with Qos {}'.format(
-            payload, message.topic, str(message.qos)))
-
-        # The device will receive its latest config when it subscribes to the
-        # config topic. If there is no configuration for the device, the device
-        # will receive a config with an empty payload.
-        if not payload:
-            return
-
-        # The config is passed in the payload of the message. In this example,
-        # the server sends a serialized JSON string.
-        data = json.loads(payload)
-
-        if "config" in message.topic:
-            print('Config message recieved!')
-
-            for config in data:
-                if config == 'peristaltic_pump_on': 
-                    if data['peristaltic_pump_on'] != self.peristaltic_pump_on:
-                    # If changing the state of the fan, print a message and
-                    # update the internal state.
-                    self.peristaltic_pump_on = data['peristaltic_pump_on']
-                    if self.peristaltic_pump_on:
-                        print('peristaltic_pump turned on.')
-                        self.peristaltic_pump.on(pins.RELAY1)
-                    else:
-                        print('peristaltic_pump turned off.')
-                        self.peristaltic_pump.off(pins.RELAY1)
-                elif config == 'max_ph':
-
-                elif config == 'max_temperature':
-
-                elif config == 'min_ph':
-
-                elif config == 'min_temperature':
-
-                elif config == 'target_ph':
-
-                elif config == 'update_interval_minutes':
-
-        elif "command" in message.topic:
-            print('Command message recieved')
-
-            # pH calibration command
-            if( 'calibration_num' in data and 'ph' in data ):
-                print("pH calibration recieved")
-                print(data)
-        else:
-            print('Unrecognized message recieved')
-
 
 def parse_command_line_args():
     """Parse command line arguments."""
@@ -343,16 +142,17 @@ def main():
             args.algorithm))
     client.tls_set(ca_certs=args.ca_certs, tls_version=ssl.PROTOCOL_TLSv1_2)
 
-    device = Device()
-
+    device = dev.Device()
+       
+    # Callbacks for when MQTT events occur
     client.on_connect = device.on_connect
     client.on_publish = device.on_publish
     client.on_disconnect = device.on_disconnect
     client.on_subscribe = device.on_subscribe
     client.on_message = device.on_message
 
+    # Connect and start the MQTT client
     client.connect(args.mqtt_bridge_hostname, args.mqtt_bridge_port)
-
     client.loop_start()
 
     # This is the topic that the device will publish telemetry events
@@ -371,47 +171,77 @@ def main():
     # Subscribe to the commands topic
     client.subscribe(mqtt_command_topic, qos=1)
 
-    #number of samples to take before publishing 
-    update_period = 30 #minutes
+    if CONTROL_LOOPS_ENABLED:
+        # Start controller to maintain pH in a healthy range
+        pH_control_thread = control.pHController()
+        pH_control_thread.start()
 
-    # Publish sensor readings every 30 minutes.
-    for _ in range(args.num_messages):
-        
-        # Samples sensors every 1 minute and checks them 
-        for i in range(update_period):
-            # READ SENSOR DATA
+        # Start controller to maintain water level
+        wl_control_thread = control.waterLevelController()
+        wl_control_thread.start()
+
+    #temporary control fix - initialize the peristaltic pump here
+    relay.init_pullup(pins.peristaltic_pump)
+    min_pH_accuracy = 0.5
+
+    # Start main application loop
+    while True:
+        try:
+            # Get most recent device configuration
+            device_config = device.get_config()
+
+            # Update sensor measurements 
             device.update_sensor_data()
 
-            #check for warnings 
-            if( device.check_leak_data() 
-                or device.check_pH_data() 
-                or device.check_temp_data()):
-                break
-            #
-            if(device.check_battery_data()):
-                print('Low Battery Voltage: ',device.battery_voltage)
-                # go into a low power mode
+            # Fetch sensor data
+            sensor_data = device.get_sensor_data()
 
+            # Publish sensor readings
+            print('Publishing sensor data: ', sensor_data)
+            client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
+
+            # Loop that checks sensor readings every minute
+            # If there are errors detected, we post an update
+            # Otherwise, we just post updates at 'update_interval_minutes'
+            for i in range(device_config['update_interval_minutes']):
+                device.update_sensor_data()
+
+                if device.error_detected():             
+                    print('[WARN] Unhealthy sensor readings detected. Publishing update early.')
+
+                    # Publish sensor readings
+                    sensor_data = device.get_sensor_data()
+                    print('Publishing sensor data: ', sensor_data)
+                    client.publish(mqtt_telemetry_topic, sensor_data, qos=1)
                 
-            time.sleep(60) #sleep for 1 min
+                #control moved to here because multi-threading with control throws tricky error
+                if(abs(device.pH-float(device_config['target_ph']))>min_pH_accuracy):
+                        #turn on peristaltic pump
+                        relay.on_pu(pins.peristaltic_pump)
+                        time.sleep(2)
+                        relay.off_pu(pins.peristaltic_pump)
 
+                 
+
+
+                time.sleep(60) # Sleep for a minute
+        except:
+            break # Exit main loop if there is an error so we can clean up
+
+    print("Killed main sensor loop")
     
-        # Report the sensor data to the server by serializing it
-        # as a JSON string.
-        payload = json.dumps({'temperature': device.temperature,
-                            'pH': device.pH,
-                            'leak': device.leak,
-                            'water_level': device.water_level, 
-                            'battery_voltage': device.battery_voltage,
-                            'internal_leak': device.internal_leak})
-        print('Publishing payload', payload)
-        client.publish(mqtt_telemetry_topic, payload, qos=1)
-        time.sleep(60) 
-     
+    # Kill control threads if main loop exits    
+    print("Killing control loops... May take up to 30 seconds...") 
+    if CONTROL_LOOPS_ENABLED:
+        pH_control_thread.kill()
+        wl_control_thread.kill()
+        pH_control_thread.join()
+        wl_control_thread.join()
+
+    # Disconnect and clean up MQTT client
     client.disconnect()
     client.loop_stop()
-    print('Finished loop successfully. Goodbye!')
-
+    print("PiPonic application exited");
 
 if __name__ == '__main__':
     main()

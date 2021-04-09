@@ -3,8 +3,6 @@ Controlling the 4 relay channels with the raspberry pi zero w
 RPi is connected to 4 relay channels on GPIO26, GPIO19, GPIO13, GPIO06 (in this order)
 
 
->>>>>>> 892991e028f6eaf4ae6bd0735b3b875f3d701d80
-
 Author: Carson Berry
 Date: February 2, 2021
 
@@ -25,8 +23,7 @@ import time
 import src.pins
 
 
-# set all the pins to output pins
-
+# Set all the pins to output pins
 GPIO.setmode(GPIO.BCM) # GPIO Assign mode so that the numbers below are the GPIO assigned names
 
 
@@ -37,7 +34,7 @@ def init(pin):
 
 # if your relay block is active LOW (you'll be pulling down the output), you'll need to init to high (pull-up default)
 def init_pullup(pin):
-    GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP) #confusing, but we turn on the pull-up resistor, so that the default value is high. 
+    GPIO.setup(pin, GPIO.OUT ) #confusing, but we turn on the pull-up resistor, so that the default value is high. 
     GPIO.output(pin, True)
 
 

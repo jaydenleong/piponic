@@ -1,22 +1,12 @@
+'''
+File: control.py
 
-#----------------------------------------------Template--------------------------------------------------#
-# This is a brief template on creating *new threading modules*
-# 1. Create a class, for example: class ph_control(object):
-# 2. Copy all the exiting initialization functions for sensors
-# 3. Add the new initialization function for the new sensor/device
-# 4. Set up the threading module at the end of this file, this includes:
-# 4.1. Define your class, for example: VARIABLE_NAME = NAME_OF_THE_CLASS()
-# 4.2. Create the thread module, for example: NAME_OF_THREAD = Thread(target = VARIABLE_NAME.FUNCTION_NAME) 
-# Notice that the FUNCTION_NAME should be the function in the class (defined before), and is the one that you would like it to iterate
-# 4.3. Start the thread, for example: NAME_OF_THREAD.start()
-#-----------------------------------------------CODE COMPLETE---------------------------------------------#
-# class ph_control(object):
-# VARIABLE_NAME = NAME_OF_THE_CLASS()
-# NAME_OF_THREAD = Thread(target = VARIABLE_NAME.FUNCTION_NAME) 
-# NAME_OF_THREAD.start()
+Purpose: Classes to control pH and water level automatically
 
+Authors: Han Xu, Lynes Chan, Jayden Leong 
+Date: March 26, 2021
 
-
+'''
 
 import board
 import busio
@@ -28,151 +18,147 @@ import time
 import src.pins as pins
 import src.relay as relay
 import src.water_level as water_level
+import src.adc as adc
+import src.device as dev
 
+class pHController(Thread):
+    """
+    PH controlling class that executes in its own thread.
+    The purpose of this class is to maintain the pH of the
+    system within a healthy range
+    """
 
-
-class pH_control(object):
     def __init__(self):
-        self.ads=0
-        self.init_i2c()
-
-        self.pH_sensor = 0
-        self.init_pH()
-        self.pH_intercept = 7
-        self.pH_offset = 1.65
-        self.pH_slope = -3.3
-        self.desired_pH = 7
+        super().__init__()
         
-        self.relay_pullup = 1 # sets the mode of the pins that connect to the relay. If your relay is active low, you want to be in Pull-up mode, otherwise pull-down mode. 
-
-    def init_i2c(self):
-        #define i2c object
-        i2c = busio.I2C(board.SCL, board.SDA)
-        #create object
-        self.ads = ADS.ADS1115(i2c) 
-
-    def init_ph(self):
-        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
-
-    def init_pH(self):
-        self.pH_sensor= AnalogIn(self.ads,ADS.P1)
-       
-    def read_pH(self):
-        pH_voltage = self.pH_sensor.voltage
-        pH = self.pH_intercept +(pH_voltage-self.pH_offset)*(self.pH_slope)
-        return pH
-
-    def read_ph(self):
-        pH_voltage = self.pH_sensor.voltage
-        pH = self.pH_intercept +(pH_voltage-self.pH_offset)*(self.pH_slope)
-        return pH
-
-    # Calibration function
-    # Intended to assist with the calibration of the pH_probe at regular (eg. monthly) intervals 
-    #
-    # REQUIRES USER ENGAGEMENT - THEY MUST CHANGE THE pH PROBE SOLUTION WHEN PROMPTED
-    # total process will take about 3 minutes.  
-    #
-    #  inputs: self, pH of calibration solution 1 (eg 7), pH of calibration solution 2 (eg. 4)
-    # updates: self.pH_slope, self.pH_intercept
-    #use: ph_control.calibrate(self,7,4)
-    def calibrate1(self, calibration_pH_1):
-        #this function constructs a linear function of the form: 
-        # y = m(x-offset)+b
-        # or 
-        # pH = (slope)*(voltage-offset_voltage)+ pH_at_offset_voltage
-         
-        print('Please place the pH probe in the first solution with pH ',calibration_pH_1,', and mix the solution with the probe. Wait 60 seconds.')
-         #Wait for 2 minutes         
-        for _ in range(120):
-            time.sleep(1)
-            print('.')
-        print('Reading now')   
-        # set the pH_offset to be the middle of the 
-        self.pH_offset = self.pH_sensor.voltage # read the pH meter's voltage in the known solution 1
-
-    def calibrate2 (self, calibration_pH_1, calibration_pH_2):
-        print('Please place the pH probe in the second solution with pH ',calibration_pH_2,', and mix the solution with the probe. Wait 60 seconds.')
-         #Wait for 2 minutes
-        for _ in range(120):
-            time.sleep(1)
-            print('.')
-        print('Reading now')   
-
-        v2 = self.pH_sensor.voltage # read the pH meter's voltage in the known solution 2
+        # Get ADC sensors object to read pH
+        self.adc_sensors = adc.adc_sensors()
         
-        #calculate slope of pH-voltage curve (should be negative)
-        self.pH_slope = (calibration_pH_1-calibration_pH_2)/(self.pH_offset-v2)
+        # Amount of time before checking the pH
+        self.pH_check_interval_secs = 30
 
-        #pH curve 'intercept' anchored around first datapoint
-        self.pH_intercept = calibration_pH_1
+        # Amount of time for pH pump to be on at a time
+        self.pH_pump_on_time_secs = 2
 
-
-
-    #Control loop where pH is checked and if it is too low, pH-increasing solution (KOH, or CaOH) is added
-    def pH_control_loop(self):
-        print('pH control loop initialization start')
-        pH = self.read_pH()
-        #initialize relay pins
-        if(self.relay_pullup):
+        # Sets the mode of the pins that connect to the relay. 
+        # If your relay is active low, you want to be in Pull-up mode, otherwise pull-down mode. 
+        self.is_relay_active_low = True
+        if(self.is_relay_active_low):
             relay.init_pullup(pins.peristaltic_pump)
         else:  
             relay.init(pins.peristaltic_pump)
 
-        # start of loop    
-        while True:
-            time.sleep(2)
-            print('pH control loop start')
+        # Set the peristaltic pump to initially be OFF
+        relay.off(pins.peristaltic_pump)
 
-            pH = self.read_pH()
-            if (pH<=self.desired_pH):	# desired_pH should be set as the minimum value you want your pH to be at.
-                print('Peristalitic Pump started')
-                # Turn on peristaltic pump for 2 seconds
-                relay.on(pins.peristaltic_pump)
-                time.sleep(2)
+        # The pH to maintain the system at
+        self.device = dev.Device()
+        self.desired_pH = self.device.get_config()['target_ph']
 
-                relay.off(pins.peristaltic_pump)
-                time.sleep(2)
+        # Check whether to kill thread
+        self.killThread = False
+    
+    def run(self):
+        print("Starting pH control loop...")
 
+        # Control loop where pH is checked and if it is too low, pH-increasing solution (KOH, or CaOH) is added
+        while not self.killThread:
+            try:
+                # Get current pH value
+                pH = self.adc_sensors.read_pH()
 
+                # Update desired pH based on device configuration
+                self.desired_pH = self.device.get_config()['target_ph']
 
-class wl_control(water_level.water_level):				
+                # desired_pH should be set as the minimum value you want your pH to be at.
+                if (pH<=self.desired_pH):	                
+                    print('Peristalitic Pump started')
+                    # Turn on peristaltic pump
+                    relay.on(pins.peristaltic_pump)
+                    time.sleep(self.pH_pump_on_time_secs)
+                    relay.off(pins.peristaltic_pump)
+                
+                time.sleep(self.pH_check_interval_secs)
+            except:
+                print("[ERROR] Exeception on pH control thread, killing thread.")
+                break
+        
+        # Ensure the pump is OFF before exiting
+        try:
+            relay.off(pins.peristaltic_pump)
+        except:
+            print("[ERROR] Failed to turn off pH pump when closing")
+
+        print("Killed pH control loop")
+        return
+
+    def kill(self):
+        self.killThread = True
+
+class waterLevelController(Thread):
+    """
+    Water level controlling class that executes in its own thread.
+    The purpose of this class is to maintain the water level of the
+    system within a healthy range
+    """
+
     def __init__(self):
-        self.relay_pullup = 1
-        super().__init__(self) #init water_level sensor class
+        super().__init__()
+        
+        # Check if water level is healthy this often
+        self.water_level_check_interval_secs = 30
 
-         
-    def read_level(self):
-        return super().read()
+        # If water level is low, turn on solenoid for this long
+        self.water_level_on_time_secs = 2
 
-    def water_level_control_loop(self):
-        if(self.relay_pullup):
+        # Variable to check if we should kill the Thread
+        self.killThread = False
+        
+        # Initalize pin for water level control
+        self.is_relay_active_low = True
+        if(self.is_relay_active_low):
             relay.init_pullup(pins.Water_level_solenoid)
         else:  
             relay.init(pins.Water_level_solenoid)
-        while True:
 
-            #TODO: double check Benny's water-level control algorithm recommendations
+        # Make sure water solenoid is OFF at start
+        # TODO: What is the difference between off_pu() and regular off()???
+        relay.off_pu(pins.Water_level_solenoid)
 
-            #if the water level is low, turn on solenoid for 2 seconds
-            if(self.read_level==0):
-                relay.on_pu(pins.Water_level_solenoid)
-                time.sleep(2)
+        # Initialize water level sensor
+        self.water_level_sensor = water_level.water_level()
 
-                relay.off_pu(pins.Water_level_solenoid)
-                time.sleep(2)
+    def kill(self):
+        self.killThread = True
+
+    def run(self):
+        print("Starting water level control loop")
+
+        # Loop that turns on the water level solenoid if water level is too low
+        while not self.killThread:
+            try:
+                #TODO: double check Benny's water-level control algorithm recommendations
+
+                # If the water level is low, turn on solenoid             
+                # TODO: is this always a binary variable for water level??? Should it be threshold?
+                # TODO: if leak happens, we keep pumping water!!?
+                if(self.water_level_sensor.read() == 0):
+                    print("Started water level solenoid")
+                    relay.on_pu(pins.Water_level_solenoid)
+                    time.sleep(self.water_level_on_time_secs)
+                    relay.off_pu(pins.Water_level_solenoid)
+                
+                # Wait to check again
+                time.sleep(self.water_level_check_interval_secs)
+            except: 
+                print("[ERROR] Exception on water level control thread, killing it")
+                break
             
-            
-            #print('valve opened')
-            time.sleep(6)
-		
-		
-#Create Class
-First = wl_control()
-FirstThread=Thread(target=First.water_level_control_loop)
-FirstThread.start()
+        # Turn off water level solenoid before exiting
+        try:
+            relay.off_pu(pins.Water_level_solenoid)
+        except:
+            print("[ERROR] Failed to turn off water level solenoid")
 
-#Create Class
-Second = pH_control()
-SecondThread=Thread(target=Second.pH_control_loop)
-SecondThread.start()
+        print("Killed water level control loop")
+        return
