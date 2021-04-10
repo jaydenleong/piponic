@@ -156,7 +156,12 @@ class adc_sensors:
                 new_line = "pH_offset "+str(self.pH_offset)+"\n"
                 calibration_file.write(new_line) 
                 calibration_file.truncate()
-                
+
+        def calibrate_pH_1(self,calibration_pH_1):
+            self.calibrate_ph_1(calibration_pH_1)
+        
+        def calibrate_pH_2(self,calibration_pH_2):
+            self.calibrate_ph_2(calibration_pH_2)
 
         def calibrate_ph_2(self, calibration_pH_2):
             #this function constructs a linear function of the form:
@@ -167,10 +172,11 @@ class adc_sensors:
             self.sensor_lock.acquire()
 
             v2 = self.pH_sensor.voltage # read the pH meter's voltage in the known solution 2
-
-            #calculate slope of pH-voltage curve (should be negative)
-            self.pH_slope = (self.calibration_pH_1-calibration_pH_2)/(self.pH_offset-v2)
-
+            try:    
+                #calculate slope of pH-voltage curve (should be negative)
+                self.pH_slope = float((self.calibration_pH_1-calibration_pH_2)/(self.pH_offset-v2))
+            except:
+                print('Divide by zero error: You must place the pH probe in the second solution and wait at least 5 minutes before calibrating with the second datapoint')
             #pH curve 'intercept' anchored around first datapoint
             self.pH_intercept = self.calibration_pH_1
 
@@ -181,7 +187,8 @@ class adc_sensors:
                 calibration_file.seek(0)
 
                 for line in all_lines:
-                    if('pH_intercept' or 'pH_slope' not in line):
+                    if('pH_intercept' not in line):
+                        if('pH_slope' not in line): 
                             #rewrite old line
                             calibration_file.write(line)
 
