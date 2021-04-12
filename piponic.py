@@ -61,7 +61,8 @@ import src.pins as pins
 import src.water_level as WL
 import src.control as control
 
-CONTROL_LOOPS_ENABLED=False #disable multithreaded control loops 
+CONTROL_LOOPS_ENABLED=False #disable multithreaded control loops
+WATER_LEVEL_CTRL_ENABLED=False # Whether to automatically control water level
 
 def create_jwt(project_id, private_key_file, algorithm):
     """Create a JWT (https://jwt.io) to establish an MQTT connection."""
@@ -222,13 +223,14 @@ def main():
                         time.sleep(1)
                         relay.off_pu(pins.peristaltic_pump)
 
-                if(device.water_level == 0): #if water level is low
-                        #relay.on_pu(pins.Water_level_solenoid)
-                        #time.sleep(1)
-                        #relay.off_pu(pins.Water_level_solenoid)
+                if WATER_LEVEL_CTRL_ENABLED:
+                    # If water level is low, turn on solenoid
+                    if(device.water_level == 0):                         
+                        relay.on_pu(pins.Water_level_solenoid)
+                        time.sleep(1)
+                        relay.off_pu(pins.Water_level_solenoid)
 
-
-                time.sleep(60) # Sleep for a minute
+            time.sleep(60) # Sleep for a minute
         except:
             break # Exit main loop if there is an error so we can clean up
 
